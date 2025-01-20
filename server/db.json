@@ -1,0 +1,94 @@
+{
+  "tickets": [
+    {
+      "id": 1,
+      "numeroTicket": "R-001",
+      "area": "Rentas",
+      "fecha": "2025-01-20",
+      "nombres": "Juan Carlos",
+      "apePaterno": "González",
+      "apeMaterno": "López",
+      "estado": "En espera"
+    },
+    {
+      "id": 2,
+      "numeroTicket": "S-001",
+      "area": "Secretariado",
+      "fecha": "2025-01-19",
+      "nombres": "María Fernanda",
+      "apePaterno": "Ramos",
+      "apeMaterno": "Pérez",
+      "estado": "Resuelto"
+    },
+    {
+      "id": 3,
+      "numeroTicket": "I-001",
+      "area": "Informatica",
+      "fecha": "2025-01-18",
+      "nombres": "Luis Alberto",
+      "apePaterno": "Martínez",
+      "apeMaterno": "García",
+      "estado": "En espera"
+    },
+    {
+      "id": 4,
+      "numeroTicket": "R-002",
+      "area": "Rentas",
+      "fecha": "2025-01-17",
+      "nombres": "Ana Sofía",
+      "apePaterno": "Hernández",
+      "apeMaterno": "Torres",
+      "estado": "En espera"
+    },
+    {
+      "id": 5,
+      "numeroTicket": "S-002",
+      "area": "Secretariado",
+      "fecha": "2025-01-16",
+      "nombres": "Carlos Andrés",
+      "apePaterno": "Vargas",
+      "apeMaterno": "Ramírez",
+      "estado": "Resuelto"
+    },
+    {
+      "id": 6,
+      "numeroTicket": "I-002",
+      "area": "Informatica",
+      "fecha": "2025-01-15",
+      "nombres": "Claudia Elena",
+      "apePaterno": "Díaz",
+      "apeMaterno": "Morales",
+      "estado": "Cerrado"
+    },
+    {
+      "id": 7,
+      "numeroTicket": "R-003",
+      "area": "Rentas",
+      "fecha": "2025-01-14",
+      "nombres": "Mario Alberto",
+      "apePaterno": "Ortega",
+      "apeMaterno": "Cruz",
+      "estado": "Resuelto"
+    },
+    {
+      "id": 8,
+      "numeroTicket": "S-003",
+      "area": "Secretariado",
+      "fecha": "2025-01-13",
+      "nombres": "Lucía Beatriz",
+      "apePaterno": "Mendoza",
+      "apeMaterno": "Paredes",
+      "estado": "En espera"
+    },
+    {
+      "id": 9,
+      "numeroTicket": "I-003",
+      "area": "Informatica",
+      "fecha": "2025-01-12",
+      "nombres": "Fernando José",
+      "apePaterno": "Salinas",
+      "apeMaterno": "Rivas",
+      "estado": "Resuelto"
+    }
+  ]
+}
