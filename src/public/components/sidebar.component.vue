@@ -1,15 +1,8 @@
 <template>
   <div class="sidebar">
-    <h1>Bank Dashboard</h1>
+    <h1>MPJ Dashboard</h1>
     <p>Welcome, Agent</p>
-    <div class="dropdown-container">
-      <pv-input-group>
-        <pv-input-group-addon>
-          <i class="pi pi-map"></i>
-        </pv-input-group-addon>
-        <pv-dropdown v-model="selectedArea" :options="areas" optionLabel="label" placeholder="Select an Area" />
-      </pv-input-group>
-    </div>
+
   </div>
 </template>
 
@@ -39,11 +32,4 @@ export default {
   color: #fff;
 }
 
-.dropdown-container {
-  border: 1px solid #ddd;
-  padding: 1em;
-  border-radius: 4px;
-  background-color: skyblue;
-  margin-top: 1em;
-}
 </style>
