@@ -1,16 +1,22 @@
 <template>
   <div class="app-container">
-    <Sidebar />
+    <Sidebar v-if="showSidebar" />
     <div class="main-content">
-      <Toolbar />
+      <Toolbar v-if="showToolbar"  user=""/>
       <router-view /> <!-- Aquí se mostrará el contenido de cada página -->
     </div>
   </div>
 </template>
 
 <script setup>
-import Toolbar from './public/components/toolbar.component.vue'
-import Sidebar from './public/components/sidebar.component.vue'
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+import Toolbar from './public/components/toolbar.component.vue';
+import Sidebar from './public/components/sidebar.component.vue';
+
+const route = useRoute();
+const showSidebar = computed(() => route.path !== '/');
+const showToolbar = computed(() => route.path !== '/');
 </script>
 
 <style scoped>

@@ -3,6 +3,15 @@ import './style.css'
 import App from './app.vue'
 import PrimeVue from 'primevue/config'
 
+
+
+import Column from 'primevue/column';
+import ColumnGroup from 'primevue/columngroup';   // optional
+import Row from 'primevue/row';
+
+import 'primeicons/primeicons.css';
+
+
 import axios from 'axios'
 
 import Button from 'primevue/button'
@@ -24,7 +33,9 @@ app.use(PrimeVue, { ripple: true })
 app.use(axios)
 app.use(router)
 
-
+app.component('Column', Column);
+app.component('ColumnGroup', ColumnGroup); // optional
+app.component('Row', Row); // optional
 app.component('pv-button', Button)
 app.component('pv-data-table', DataTable)
 app.component('pv-toolbar', Toolbar)

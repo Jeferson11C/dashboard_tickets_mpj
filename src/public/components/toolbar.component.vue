@@ -1,6 +1,9 @@
 <template>
   <div class="toolbar">
     <div class="title">DASHBOARD MUNI JAEN</div>
+    <div v-if="user" class="user-info">
+      <span>{{ user.nombreCompleto }} - {{ user.area }}</span>
+    </div>
     <button @click="logout" class="logout-button">Salir</button>
   </div>
 </template>
@@ -8,10 +11,16 @@
 <script>
 export default {
   name: "toolbar",
+  props: {
+    user: {
+      type: Object,
+      required: true
+    }
+  },
   methods: {
     logout() {
-      // Lógica para cerrar sesión
-      console.log("Logout clicked");
+      this.$emit('user-logged-out');
+      this.$router.push({ name: 'login' });
     }
   }
 }
@@ -27,9 +36,15 @@ export default {
   border-bottom: 1px solid #ddd;
   color: #fff;
 }
+
 .title {
   font-size: 1.5em;
 }
+
+.user-info {
+  color: #fff;
+}
+
 .logout-button {
   padding: 0.5em 1em;
   font-size: 1em;

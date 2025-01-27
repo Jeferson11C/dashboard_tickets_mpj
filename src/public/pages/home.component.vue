@@ -181,7 +181,7 @@ export default {
     startPolling() {
       setInterval(() => {
         this.fetchTickets(this.selectedArea);
-      }, 5000); // Polling interval of 5 seconds
+      }, 1000); // Polling interval of 5 seconds
     }
   }
 };
