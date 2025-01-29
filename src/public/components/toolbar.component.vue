@@ -4,7 +4,6 @@
     <div v-if="user" class="user-info">
       <span>{{ user.nombreCompleto }} - {{ user.area }}</span>
     </div>
-    <button @click="logout" class="logout-button">Salir</button>
   </div>
 </template>
 
@@ -20,7 +19,7 @@ export default {
   methods: {
     logout() {
       this.$emit('user-logged-out');
-      this.$router.push({ name: 'login' });
+      this.$router.push({name: 'login'});
     }
   }
 }
@@ -45,9 +44,5 @@ export default {
   color: #fff;
 }
 
-.logout-button {
-  padding: 0.5em 1em;
-  font-size: 1em;
-  cursor: pointer;
-}
+
 </style>

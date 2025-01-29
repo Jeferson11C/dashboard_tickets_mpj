@@ -2,14 +2,14 @@
   <div class="app-container">
     <Sidebar v-if="showSidebar" />
     <div class="main-content">
-      <Toolbar v-if="showToolbar"  user=""/>
+      <Toolbar v-if="showToolbar" :user="user" />
       <router-view /> <!-- Aquí se mostrará el contenido de cada página -->
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 import Toolbar from './public/components/toolbar.component.vue';
 import Sidebar from './public/components/sidebar.component.vue';
@@ -17,12 +17,26 @@ import Sidebar from './public/components/sidebar.component.vue';
 const route = useRoute();
 const showSidebar = computed(() => route.path !== '/');
 const showToolbar = computed(() => route.path !== '/');
+
+const user = ref({
+  id: localStorage.getItem('userId'),
+  nombreCompleto: localStorage.getItem('userNombreCompleto'),
+  area: localStorage.getItem('userArea')
+});
+
+watchEffect(() => {
+  user.value = {
+    id: localStorage.getItem('userId'),
+    nombreCompleto: localStorage.getItem('userNombreCompleto'),
+    area: localStorage.getItem('userArea')
+  };
+});
 </script>
 
 <style scoped>
 .app-container {
   display: flex;
-  height: 100vh;
+  height: 98vh;
 }
 
 .main-content {

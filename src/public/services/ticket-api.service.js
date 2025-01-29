@@ -33,6 +33,21 @@ class TicketApiService {
     updateStatus(id, status) {
         return http.put(`/api/ticket/${id}/status`, { estado: status });
     }
+
+
+     /////// servicio de user
+    async fetchUsersByRole(role) {
+        return http.get(`/api/user/role/${role}`);
+    }
+
+    async fetchUsersByArea(area) {
+        return http.get(`/api/user/area/${area}`);
+    }
+
+    async fetchUserById(id) {
+        return http.get(`/api/user/${id}`);
+    }
+
 }
 
 export default new TicketApiService();

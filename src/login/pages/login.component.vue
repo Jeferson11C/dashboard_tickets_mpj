@@ -48,6 +48,8 @@ export default {
       const user = this.users.find(user => user.username === this.username && user.password === this.password);
       if (user) {
         console.log('Login successful:', user);
+        localStorage.setItem('userArea', user.area); // Store user's area
+        localStorage.setItem('userRole', user.rol); // Store user's role
         this.$emit('user-logged-in', user);
         this.$router.push({ name: 'home' });
       } else {

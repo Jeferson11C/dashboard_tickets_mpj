@@ -3,20 +3,37 @@
     <h1>MPJ Dashboard</h1>
     <p>Welcome, Agent</p>
     <button @click="goToTicketPanel">ticket</button>
-    <button @click="goToAttentionPanel">Panel de Atención</button>
-    <button @click="goToAdminPanel">Administrador</button>
+    <div>
+      <button @click="toggleReportesDropdown">Reportes</button>
+      <div v-if="showReportesDropdown" class="dropdown">
+        <button @click="goToGeneralReport">General</button>
+        <button @click="goToGraficosReport">Graficos</button>
+      </div>
+    </div>
+    <button @click="goToAdminPanel">Usuarios</button>
   </div>
 </template>
 
 <script>
 export default {
   name: "sidebar",
+  data() {
+    return {
+      showReportesDropdown: false
+    };
+  },
   methods: {
+    toggleReportesDropdown() {
+      this.showReportesDropdown = !this.showReportesDropdown;
+    },
     goToTicketPanel() {
       this.$router.push({ path: '/home' });
     },
-    goToAttentionPanel() {
-      this.$router.push({ path: '/panel' });
+    goToGeneralReport() {
+      this.$router.push({ path: '/reporte' });
+    },
+    goToGraficosReport() {
+      this.$router.push({ path: '/grafico' });
     },
     goToAdminPanel() {
       this.$router.push({ path: '/administrador' });
@@ -31,7 +48,7 @@ export default {
   background-color: #2c3e50;
   padding: 1em;
   border-right: 1px solid #ddd;
-  height: 100vh;
+  height: auto;
   color: #fff;
 }
 
@@ -49,5 +66,14 @@ button {
 
 button:hover {
   background-color: #2980b9;
+}
+
+.dropdown {
+  margin-left: 1em;
+}
+
+.dropdown button {
+  width: calc(100% - 1em);
+  margin: 0.5em 0;
 }
 </style>

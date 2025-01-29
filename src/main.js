@@ -3,14 +3,14 @@ import './style.css'
 import App from './app.vue'
 import PrimeVue from 'primevue/config'
 
+   // theme
 
 
 import Column from 'primevue/column';
-import ColumnGroup from 'primevue/columngroup';   // optional
+import ColumnGroup from 'primevue/columngroup';
 import Row from 'primevue/row';
 
 import 'primeicons/primeicons.css';
-
 
 import axios from 'axios'
 
@@ -24,6 +24,9 @@ import InputIcon from 'primevue/inputicon'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import Dropdown from 'primevue/dropdown'
+import pvDialog  from 'primevue/dialog';
+import Card from 'primevue/card';
+import Calendar from 'primevue/calendar';
 
 import router from "./router/index.js";
 
@@ -46,5 +49,9 @@ app.component('pv-input-icon', InputIcon)
 app.component('pv-input-group', InputGroup)
 app.component('pv-input-group-addon', InputGroupAddon)
 app.component('pv-dropdown', Dropdown)
+app.component('pv-dialog', pvDialog)
+app.component('pv-card', Card)
+app.component('pv-calendar', Calendar)
+
 
 app.mount('#app')

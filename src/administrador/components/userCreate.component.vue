@@ -59,7 +59,7 @@ export default {
     });
 
     const areas = ref([{ nombre: 'Seleccione una opción', id: null }]);
-    const roles = ref(['Seleccione una opción', 'admi', 'user']);
+    const roles = ref(['Seleccione una opción', 'Administrador', 'Recepcionista']);
 
     const fetchAreas = async () => {
       try {
@@ -129,51 +129,175 @@ export default {
 <style scoped>
 .user-create {
   padding: 1em;
+  background-color: lightgrey;
+}
+.user-create {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-create h2 {
+  color: #2c3e50;
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 500;
 }
 
 form {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1em;
-  align-items: center;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 }
 
 label {
-  margin-bottom: 0.5em;
+  color: #4a5568;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
-input, .p-dropdown {
-  width: 100%;
-  padding: 0.5em;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+input {
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background-color: #fff;
 }
 
-.p-dropdown-panel {
-  z-index: 1000 !important;
+input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Estilos mejorados para los dropdowns */
+:deep(.p-dropdown) {
+  height: 2.3rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+:deep(.p-dropdown:not(.p-disabled)) {
+  background: #fff;
+}
+
+:deep(.p-dropdown:not(.p-disabled):hover) {
+  border-color: #cbd5e1;
+}
+
+:deep(.p-dropdown:not(.p-disabled).p-focus) {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+:deep(.p-dropdown-label) {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #4a5568;
+  background: #fff;
+}
+
+:deep(.p-dropdown-label.p-placeholder) {
+  color: #94a3b8;
+}
+
+:deep(.p-dropdown-trigger) {
+  width: 2.3rem;
+  background: transparent;
+  padding: 0 0.5rem;
+}
+
+:deep(.p-dropdown-trigger-icon) {
+  color: #64748b;
+}
+
+:deep(.p-dropdown-panel) {
+  background: #fff;
+  border: none;
+  border-radius: 6px;
+  margin-top: 4px;
+  padding: 0.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+:deep(.p-dropdown-items-wrapper) {
+  max-height: 200px;
+}
+
+:deep(.p-dropdown-items) {
+  padding: 0.25rem;
+}
+
+:deep(.p-dropdown-item) {
+  margin: 0.125rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #4a5568;
+  transition: all 0.2s;
+}
+
+:deep(.p-dropdown-item:hover) {
+  background-color: #f1f5f9;
+  color: #2563eb;
+}
+
+:deep(.p-dropdown-item.p-highlight) {
+  background-color: #e0e7ff;
+  color: #2563eb;
 }
 
 .form-button {
   grid-column: span 2;
   display: flex;
   justify-content: center;
+  margin-top: 1rem;
 }
 
 button {
-  padding: 0.5em 1em;
-  background-color: #3498db;
-  color: #fff;
+  padding: 0.5rem 2rem;
+  background-color: #3b82f6;
+  color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 button:hover {
-  background-color: #2980b9;
+  background-color: #2563eb;
+}
+
+/* Responsive */
+@media screen and (max-width: 640px) {
+  .user-create {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  form {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .form-button {
+    grid-column: 1;
+    margin-top: 0.75rem;
+  }
 }
 </style>
