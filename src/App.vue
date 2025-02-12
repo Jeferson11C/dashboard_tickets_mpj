@@ -3,14 +3,14 @@
     <Sidebar v-if="showSidebar" />
     <div class="main-content">
       <Toolbar v-if="showToolbar" :user="user" />
-      <router-view /> <!-- Aquí se mostrará el contenido de cada página -->
+      <router-view @user-logged-in="updateUser" /> <!-- Listen for the user-logged-in event -->
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watchEffect } from 'vue';
-import { useRoute } from 'vue-router';
+import {computed, ref, watchEffect} from 'vue';
+import {useRoute} from 'vue-router';
 import Toolbar from './public/components/toolbar.component.vue';
 import Sidebar from './public/components/sidebar.component.vue';
 
@@ -20,15 +20,26 @@ const showToolbar = computed(() => route.path !== '/');
 
 const user = ref({
   id: localStorage.getItem('userId'),
-  nombreCompleto: localStorage.getItem('userNombreCompleto'),
-  area: localStorage.getItem('userArea')
+  nombreCompleto: localStorage.getItem('userFullName'),
+  area: localStorage.getItem('userArea'),
+  rol: localStorage.getItem('userRole')
 });
+
+function updateUser() {
+  user.value = {
+    id: localStorage.getItem('userId'),
+    nombreCompleto: localStorage.getItem('userFullName'),
+    area: localStorage.getItem('userArea'),
+    rol: localStorage.getItem('userRole')
+  };
+}
 
 watchEffect(() => {
   user.value = {
     id: localStorage.getItem('userId'),
-    nombreCompleto: localStorage.getItem('userNombreCompleto'),
-    area: localStorage.getItem('userArea')
+    nombreCompleto: localStorage.getItem('userFullName'),
+    area: localStorage.getItem('userArea'),
+    rol: localStorage.getItem('userRole')
   };
 });
 </script>

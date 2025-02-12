@@ -17,6 +17,7 @@
             <input type="password" v-model="password" id="password" required />
           </div>
           <button type="submit" class="login-button">INGRESAR</button>
+          <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
         </form>
       </div>
     </div>
@@ -25,6 +26,7 @@
 
 <script>
 import LoginApiService from '../services/login-api.service';
+import UserApiService from '../../administrador/services/user-api.service';
 
 export default {
   name: "login",
@@ -32,33 +34,43 @@ export default {
     return {
       username: '',
       password: '',
-      users: []
+      errorMessage: ''
     };
   },
   methods: {
-    async fetchUsers() {
-      try {
-        const response = await LoginApiService.fetchUsers();
-        this.users = response.data;
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      }
-    },
     async login() {
-      const user = this.users.find(user => user.username === this.username && user.password === this.password);
-      if (user) {
-        console.log('Login successful:', user);
-        localStorage.setItem('userArea', user.area); // Store user's area
-        localStorage.setItem('userRole', user.rol); // Store user's role
-        this.$emit('user-logged-in', user);
-        this.$router.push({ name: 'home' });
-      } else {
-        console.error('Invalid username or password');
+      try {
+        const response = await LoginApiService.signIn(this.username, this.password);
+        const user = response.data;
+
+        if (user && user.token && user.id) {
+          localStorage.setItem('token', user.token);
+          localStorage.setItem('userId', user.id);
+
+          const userInfoResponse = await UserApiService.fetchUserById(user.id);
+          const userInfo = userInfoResponse.data;
+
+          if (userInfo && userInfo.rol && userInfo.area) {
+            localStorage.setItem('userRole', userInfo.rol);
+            localStorage.setItem('userArea', userInfo.area);
+            localStorage.setItem('userFullName', userInfo.nombreCompleto);
+            localStorage.setItem('userUserName', userInfo.username); // Store the username
+
+            console.log('User logged in successfully');
+
+            this.$emit('user-logged-in', user);
+            this.$router.push({ name: 'home' });
+          } else {
+            throw new Error('Invalid user info');
+          }
+        } else {
+          throw new Error('Invalid user data');
+        }
+      } catch (error) {
+        console.error('Error during login:', error);
+        this.errorMessage = 'Nombre de usuario o contraseña incorrectos';
       }
     }
-  },
-  mounted() {
-    this.fetchUsers();
   }
 };
 </script>
@@ -153,4 +165,10 @@ input {
 .login-button:hover {
   background: linear-gradient(to right, #0056a4, #003e7e);
 }
+.error-message {
+  color: red;
+  margin-top: 1em;
+  text-align: center;
+}
+
 </style>

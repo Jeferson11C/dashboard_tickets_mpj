@@ -1,8 +1,66 @@
+<template>
+  <div class="container">
+    <div class="content">
+      <div class="sidebar">
+        <select v-if="userRole === 'Administrador'" v-model="selectedArea" @change="handleAreaChange">
+          <option value="">Seleccionar Área</option>
+          <option v-for="area in areas" :key="area.nombre" :value="area.nombre">{{ area.nombre }}</option>
+        </select>
+        <button v-if="userRole === 'Administrador'" @click="showCreateAreaModal">Crear Área</button>
+      </div>
+      <div class="status-bar">
+        <div
+            class="status"
+            v-for="status in statuses"
+            :key="status.title"
+            :class="{ 'selected-status': selectedStatus === status.title }"
+            @click="filterTicketsByStatus(status.title)"
+        >
+          <h3>{{ status.title }}</h3>
+          <p>{{ status.count }}</p>
+        </div>
+      </div>
+      <div class="main-content">
+        <TicketListComponent
+            :tickets="tickets"
+            :selectedArea="selectedArea"
+            :selectedStatus="selectedStatus"
+            :selectedTicket="selectedTicket"
+            @select-ticket="selectTicket"
+        />
+        <TicketDetailsComponent
+            :selectedTicket="selectedTicket"
+            @resolve-ticket="resolveTicket"
+            @cancel-ticket="cancelTicket"
+            @reopen-ticket="reopenTicket"
+            @submit-observation="submitObservation"
+        />
+      </div>
+    </div>
+    <div v-if="showModal" class="modal">
+      <div class="modal-content">
+        <h3>Crear Área</h3>
+        <input v-model="newAreaName" placeholder="Nombre del Área"/>
+        <button @click="createArea">Crear</button>
+        <button @click="closeCreateAreaModal">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script>
+import TicketListComponent from '../components/TicketListComponent.vue';
+import TicketDetailsComponent from '../components/TicketDetailsComponent.vue';
 import TicketApiService from '../services/ticket-api.service';
+import CommentApiService from '../services/comment-api.service';
+import WebSocketService from '../../shared/WebSocket.Service';
 
 export default {
   name: "home.component",
+  components: {
+    TicketListComponent,
+    TicketDetailsComponent
+  },
   data() {
     return {
       statuses: [
@@ -13,28 +71,27 @@ export default {
       tickets: [],
       areas: [],
       selectedTicket: null,
-      selectedArea: localStorage.getItem('userArea') || '', // Retrieve user's area
-      userRole: localStorage.getItem('userRole') || '', // Retrieve user's role
+      selectedArea: localStorage.getItem('userArea') || '',
+      userRole: localStorage.getItem('userRole') || '',
       selectedStatus: 'En espera',
       showModal: false,
-      newAreaName: ''
+      newAreaName: '',
+      webSocketService: null
     };
-  },
-  computed: {
-    filteredTickets() {
-      return this.tickets.filter(ticket => {
-        return (!this.selectedArea || ticket.areaNombre === this.selectedArea) &&
-            (ticket.estado === this.selectedStatus);
-      });
-    }
   },
   created() {
     if (this.userRole === 'user') {
       this.selectedArea = localStorage.getItem('userArea');
     }
-    this.fetchTickets(this.selectedArea); // Filter tickets by user's area
+    this.fetchTickets(this.selectedArea);
     this.fetchAreas();
+    this.setupWebSocketConnection();
     this.startPolling();
+  },
+  beforeDestroy() {
+    if (this.webSocketService) {
+      this.webSocketService.close();
+    }
   },
   methods: {
     async fetchTickets(areaNombre = '') {
@@ -54,32 +111,61 @@ export default {
     async fetchAreas() {
       try {
         const response = await TicketApiService.getAreas();
-        this.areas = response.data;
+        this.areas = response.data.filter(area => area.nombre.toLowerCase() !== 'general');
       } catch (error) {
         console.error('Error fetching areas:', error);
       }
     },
-    selectTicket(ticket) {
-      this.selectedTicket = ticket;
+    setupWebSocketConnection() {
+      this.webSocketService = new WebSocketService();
+      this.webSocketService.connect();
     },
-    async updateTicketStatus(ticket, status) {
+    async selectTicket(ticket) {
+      this.selectedTicket = ticket;
+      if (ticket.estado === 'En espera') {
+        await this.updateTicketStatus(ticket, 'Abierto');
+        this.selectedTicket.estado = 'Abierto';
+      }
+
+      const message = JSON.stringify({
+        entityName: "Ticket",
+        action: "Updated",
+        entity: this.selectedTicket
+      });
+      this.webSocketService.sendMessage(message);
+    },
+    async updateTicketStatus(ticket, status, observation = '') {
       try {
         ticket.estado = status;
+        ticket.observacion = observation;
         this.updateStatusCounts();
-        this.selectedTicket = null;
         await TicketApiService.updateStatus(ticket.id, status);
+
+        // Send message via WebSocket
+        const message = JSON.stringify({
+          entityName: "Ticket",
+          action: "Updated",
+          entity: ticket
+        });
+        this.webSocketService.sendMessage(message);
       } catch (error) {
         console.error('Error updating ticket status:', error);
       }
     },
     async resolveTicket() {
       if (this.selectedTicket) {
-        await this.updateTicketStatus(this.selectedTicket, 'Resuelto');
+        this.showObservationModal('resolve');
       }
     },
     async cancelTicket() {
       if (this.selectedTicket) {
-        await this.updateTicketStatus(this.selectedTicket, 'Cancelado');
+        this.showObservationModal('cancel');
+      }
+    },
+    async reopenTicket() {
+      if (this.selectedTicket) {
+        await this.updateTicketStatus(this.selectedTicket, 'En espera');
+        this.selectedTicket = null;
       }
     },
     filterTicketsByStatus(status) {
@@ -111,9 +197,17 @@ export default {
           codigo: this.newAreaName.charAt(0).toUpperCase()
         };
         try {
-          await TicketApiService.createArea(area);
-          this.fetchAreas();
+          const response = await TicketApiService.createArea(area);
+          this.areas.push(response.data);
           this.closeCreateAreaModal();
+
+          // Send message via WebSocket
+          const message = JSON.stringify({
+            entityName: "Area",
+            action: "Created",
+            entity: response.data
+          });
+          this.webSocketService.sendMessage(message);
         } catch (error) {
           console.error('Error creating area:', error);
         }
@@ -122,82 +216,29 @@ export default {
     startPolling() {
       setInterval(() => {
         this.fetchTickets(this.selectedArea);
-      }, 1000); // Polling interval of 5 seconds
+      }, 1000);
+    },
+    async submitObservation(comment, actionType) {
+      try {
+        await CommentApiService.createComment(comment);
+        if (actionType === 'resolve') {
+          await this.updateTicketStatus(this.selectedTicket, 'Resuelto', comment.coment);
+        } else if (actionType === 'cancel') {
+          await this.updateTicketStatus(this.selectedTicket, 'Cancelado', comment.coment);
+        }
+      } catch (error) {
+        console.error('Error submitting observation:', error);
+      }
     }
   }
 };
 </script>
 
-<template>
-  <div class="container">
-    <div class="content">
-      <div class="sidebar">
-        <select v-if="userRole === 'Administrador'" v-model="selectedArea" @change="handleAreaChange">
-          <option value="">Seleccionar Área</option>
-          <option v-for="area in areas" :key="area.nombre" :value="area.nombre">{{ area.nombre }}</option>
-        </select>
-        <button v-if="userRole === 'Administrador'" @click="showCreateAreaModal">Crear Área</button>
-      </div>
-      <div class="status-bar">
-        <div
-            class="status"
-            v-for="status in statuses"
-            :key="status.title"
-            :class="{ 'selected-status': selectedStatus === status.title }"
-            @click="filterTicketsByStatus(status.title)"
-        >
-          <h3>{{ status.title }}</h3>
-          <p>{{ status.count }}</p>
-        </div>
-      </div>
-      <div class="ticket-list">
-        <div v-if="!selectedArea" class="no-area-selected">
-          <p>Seleccione su área para atender los tickets</p>
-        </div>
-        <div v-else class="tickets">
-          <div
-              class="ticket"
-              v-for="ticket in filteredTickets"
-              :key="ticket.id"
-              :class="{ 'selected-ticket': selectedTicket && selectedTicket.id === ticket.id }"
-              @click="selectTicket(ticket)"
-          >
-            <h4>Ticket: {{ ticket.numeroTicket }}</h4>
-            <p>Estado: {{ ticket.estado }}</p>
-          </div>
-        </div>
-        <div class="ticket-details" v-if="selectedTicket">
-          <h3>Detalles del Ticket</h3>
-          <p><strong>Número de Ticket:</strong> {{ selectedTicket.numeroTicket }}</p>
-          <p><strong>Área:</strong> {{ selectedTicket.areaNombre }}</p>
-          <p><strong>Fecha:</strong> {{ selectedTicket.fecha }}</p>
-          <p><strong>Nombre:</strong> {{ selectedTicket.nombres }} {{ selectedTicket.apePaterno }}
-            {{ selectedTicket.apeMaterno }}</p>
-          <p><strong>Estado:</strong> {{ selectedTicket.estado }}</p>
-          <div class="actions" v-if="selectedTicket.estado !== 'Resuelto' && selectedTicket.estado !== 'Cancelado'">
-            <pv-button label="Resolver" @click="resolveTicket"/>
-            <pv-button label="Cancelar" @click="cancelTicket"/>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div v-if="showModal" class="modal">
-      <div class="modal-content">
-        <h3>Crear Área</h3>
-        <input v-model="newAreaName" placeholder="Nombre del Área"/>
-        <button @click="createArea">Crear</button>
-        <button @click="closeCreateAreaModal">Cancelar</button>
-      </div>
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .container {
   padding: 1.5em;
 }
-
-
 
 .sidebar {
   margin-bottom: 1.5rem;
@@ -243,13 +284,7 @@ export default {
   transition: all 0.2s;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-
 }
-
-
-
-
 
 .status h3 {
   color: #1e293b;
@@ -262,7 +297,6 @@ export default {
   font-size: 1.5rem;
   font-weight: bold;
   margin: 0;
-
 }
 
 /* Estado específico para "En espera" */
@@ -272,108 +306,21 @@ export default {
   color: #2196f3;
 }
 
-/* Estado específico para "Resuelto" */
 .status:nth-child(2) {
   background-color: #e8f5e9;
   border: 2px solid #4caf50;
   color: #4caf50;
 }
 
-/* Estado específico para "Cancelado" */
 .status:nth-child(3) {
   background-color: #ffebee;
   border: 2px solid #f44336;
   color: #f44336;
 }
 
-.ticket-list {
-  display: grid;
-  grid-template-columns: 1fr 1.5fr;
-  gap: 2rem;
-  min-height: 500px;
-}
-
-.no-area-selected {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: white;
-  border-radius: 0.75rem;
-  padding: 3rem;
-  font-size: 1.25rem;
-  color: #64748b;
-  border: 2px dashed #e2e8f0;
-}
-
-.tickets {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  overflow-y: auto;
-  max-height: 600px;
-  padding-right: 1rem;
-}
-
-.ticket {
-  background-color: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.ticket:hover {
-  transform: translateX(4px);
-  border-color: #94a3b8;
-}
-
-.ticket.selected-ticket {
-  background-color: #f1f5f9;
-  border-color: #3b82f6;
-}
-
-.ticket h4 {
-  color: #1e293b;
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-}
-
-.ticket p {
-  color: #64748b;
-  margin: 0;
-  font-size: 0.95rem;
-}
-
-.ticket-details {
-  background-color: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.ticket-details h3 {
-  color: #1e293b;
-  margin: 0 0 1.5rem 0;
-  font-size: 1.25rem;
-}
-
-.ticket-details p {
-  color: #475569;
-  margin: 0.75rem 0;
-  font-size: 1rem;
-}
-
-.ticket-details strong {
-  color: #1e293b;
-}
-
-.actions {
+.main-content {
   display: flex;
   gap: 1rem;
-  margin-top: 2rem;
 }
 
 .modal {
@@ -427,7 +374,4 @@ export default {
   background-color: #3b82f6;
   color: white;
 }
-
-
-
 </style>

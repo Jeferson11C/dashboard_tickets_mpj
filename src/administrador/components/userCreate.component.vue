@@ -4,19 +4,19 @@
     <form @submit.prevent="createUser">
       <div class="form-group">
         <label for="nombre">Nombre</label>
-        <input type="text" id="nombre" v-model="user.nombre" required />
+        <input type="text" id="nombre" v-model="user.nombre" @input="validateLettersAndSpaces($event, 'nombre')" required />
       </div>
       <div class="form-group">
         <label for="apePaterno">Apellido Paterno</label>
-        <input type="text" id="apePaterno" v-model="user.apePaterno" required />
+        <input type="text" id="apePaterno" v-model="user.apePaterno" @input="validateLettersAndSpaces($event, 'apePaterno')" required />
       </div>
       <div class="form-group">
         <label for="apeMaterno">Apellido Materno</label>
-        <input type="text" id="apeMaterno" v-model="user.apeMaterno" required />
+        <input type="text" id="apeMaterno" v-model="user.apeMaterno" @input="validateLettersAndSpaces($event, 'apeMaterno')" required />
       </div>
       <div class="form-group">
         <label for="username">Nombre de Usuario</label>
-        <input type="text" id="username" v-model="user.username" required />
+        <input type="text" id="username" v-model="user.username"  required />
       </div>
       <div class="form-group">
         <label for="password">Contraseña</label>
@@ -121,6 +121,18 @@ export default {
       this.user.password = '';
       this.user.area = null;
       this.user.rol = null;
+    },
+    validateLettersAndSpaces(event, field) {
+      const regex = /^[A-Za-z\s]*$/;
+      if (!regex.test(event.target.value)) {
+        this.user[field] = event.target.value.replace(/[^A-Za-z\s]/g, '');
+      }
+    },
+    validateUsername(event) {
+      const regex = /^[A-Za-z0-9]*$/;
+      if (!regex.test(event.target.value)) {
+        this.user.username = event.target.value.replace(/[^A-Za-z0-9]/g, '');
+      }
     }
   }
 };
@@ -178,86 +190,6 @@ input:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-/* Estilos mejorados para los dropdowns */
-:deep(.p-dropdown) {
-  height: 2.3rem;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-
-:deep(.p-dropdown:not(.p-disabled)) {
-  background: #fff;
-}
-
-:deep(.p-dropdown:not(.p-disabled):hover) {
-  border-color: #cbd5e1;
-}
-
-:deep(.p-dropdown:not(.p-disabled).p-focus) {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-:deep(.p-dropdown-label) {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  color: #4a5568;
-  background: #fff;
-}
-
-:deep(.p-dropdown-label.p-placeholder) {
-  color: #94a3b8;
-}
-
-:deep(.p-dropdown-trigger) {
-  width: 2.3rem;
-  background: transparent;
-  padding: 0 0.5rem;
-}
-
-:deep(.p-dropdown-trigger-icon) {
-  color: #64748b;
-}
-
-:deep(.p-dropdown-panel) {
-  background: #fff;
-  border: none;
-  border-radius: 6px;
-  margin-top: 4px;
-  padding: 0.25rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-  0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-:deep(.p-dropdown-items-wrapper) {
-  max-height: 200px;
-}
-
-:deep(.p-dropdown-items) {
-  padding: 0.25rem;
-}
-
-:deep(.p-dropdown-item) {
-  margin: 0.125rem 0;
-  padding: 0.5rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  color: #4a5568;
-  transition: all 0.2s;
-}
-
-:deep(.p-dropdown-item:hover) {
-  background-color: #f1f5f9;
-  color: #2563eb;
-}
-
-:deep(.p-dropdown-item.p-highlight) {
-  background-color: #e0e7ff;
-  color: #2563eb;
 }
 
 .form-button {

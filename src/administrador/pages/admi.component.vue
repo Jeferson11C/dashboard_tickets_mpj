@@ -2,7 +2,11 @@
   <div class="admi">
     <button @click="toggleCreateUserForm">Crear Usuario</button>
     <userCreate v-if="showCreateUserForm" @userCreated="addUserToList" />
-    <updateUser v-if="showUpdateUserForm" :user="selectedUser" @userUpdated="updateUserInList" />
+
+    <pv-dialog v-model:visible="showUpdateUserForm" modal :style="{ width: '50vw' }">
+      <updateUser :user="selectedUser" @userUpdated="updateUserInList" @closeModal="showUpdateUserForm = false" />
+    </pv-dialog>
+
     <div class="filters">
       <pv-dropdown v-model="selectedArea" :options="areas" optionLabel="nombre" placeholder="Filtrar por Área" @change="filterUsersByArea" />
       <pv-dropdown v-model="selectedRole" :options="roles" placeholder="Filtrar por Rol" @change="filterUsersByRole" />
@@ -87,7 +91,7 @@ const updateUserInList = (updatedUser) => {
     users.value[index] = updatedUser;
     filterUsers();
   }
-  showUpdateUserForm.value = false;
+  showUpdateUserForm.value = false; // Cierra el modal después de actualizar
 };
 
 const filterUsers = () => {
@@ -107,10 +111,8 @@ const filterUsersByRole = () => {
 };
 
 const editUser = (user) => {
-  console.log('Editing user:', user);
-  selectedUser.value = { ...user };
-  showUpdateUserForm.value = true;
-  console.log('showUpdateUserForm:', showUpdateUserForm.value);
+  selectedUser.value = { ...user }; // Copia el usuario seleccionado
+  showUpdateUserForm.value = true; // Abre el modal de edición
 };
 
 onMounted(() => {
@@ -124,7 +126,6 @@ onMounted(() => {
   padding: 1em;
 }
 
-/* Botón principal de crear usuario */
 .admi > button {
   padding: 0.75rem 1.5rem;
   background-color: #4CAF50;
@@ -144,7 +145,6 @@ onMounted(() => {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Sección de filtros */
 .filters {
   display: flex;
   gap: 1.5rem;
@@ -152,9 +152,6 @@ onMounted(() => {
   align-items: center;
 }
 
-
-
-/* Título de la lista */
 h2 {
   color: #2c3e50;
   margin-bottom: 1.5rem;
@@ -162,15 +159,12 @@ h2 {
   font-weight: 600;
 }
 
-/* Tabla de datos */
 .card {
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
-
-
 
 :deep(.p-datatable .p-datatable-thead > tr > th) {
   background-color: darkgrey;
@@ -193,7 +187,6 @@ h2 {
   background-color: #f8f9fa;
 }
 
-/* Botones de acción en la tabla */
 :deep(.p-button-rounded) {
   width: 2.5rem;
   height: 2.5rem;
@@ -220,12 +213,10 @@ h2 {
   border-color: #c0392b;
 }
 
-/* Estilos para los iconos dentro de los botones */
 :deep(.pi) {
   font-size: 1rem;
 }
 
-/* Responsive adjustments */
 @media screen and (max-width: 768px) {
   .admi {
     padding: 1rem;

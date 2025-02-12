@@ -17,8 +17,9 @@ class UserApiService {
     }
 
     // Actualizar un usuario por ID
-    async updateUser(user) {
-        return http.put(`/api/user/${user.id}`, user);
+    async updateUser(id, userData) {
+        console.log('Updating user with ID:', id); // Verifica que el ID esté correcto
+        return http.put(`/api/user/${id}`, userData);
     }
 
     // Eliminar un usuario por ID
@@ -39,6 +40,8 @@ class UserApiService {
     async getAreas() {
         return http.get('/api/area');
     }
+
+
 }
 
 export default new UserApiService();
