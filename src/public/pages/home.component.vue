@@ -29,11 +29,15 @@
             @select-ticket="selectTicket"
         />
         <TicketDetailsComponent
+            ref="ticketDetailsComponent"
             :selectedTicket="selectedTicket"
             @resolve-ticket="resolveTicket"
             @cancel-ticket="cancelTicket"
             @reopen-ticket="reopenTicket"
             @submit-observation="submitObservation"
+            v-if="selectedTicket"
+            @ticket-transferred="handleTicketTransferred"
+            @confirm-transfer="confirmTransfer"
         />
       </div>
     </div>
@@ -76,7 +80,8 @@ export default {
       selectedStatus: 'En espera',
       showModal: false,
       newAreaName: '',
-      webSocketService: null
+      webSocketService: null,
+      ticketToTransfer: null
     };
   },
   created() {
@@ -133,6 +138,25 @@ export default {
         entity: this.selectedTicket
       });
       this.webSocketService.sendMessage(message);
+    },
+    handleTicketTransferred(transferredTicket) {
+      this.ticketToTransfer = transferredTicket;
+      if (this.$refs.ticketDetailsComponent) {
+        this.$refs.ticketDetailsComponent.showTransferSuccessModal = true;
+      } else {
+        console.error('TicketDetailsComponent reference is not available.');
+      }
+    },
+    confirmTransfer() {
+      if (this.ticketToTransfer) {
+        // Remove the transferred ticket from the list of tickets
+        this.tickets = this.tickets.filter(ticket => ticket.id !== this.ticketToTransfer.id);
+        // Clear the selected ticket if it was the transferred one
+        if (this.selectedTicket && this.selectedTicket.id === this.ticketToTransfer.id) {
+          this.selectedTicket = null;
+        }
+        this.ticketToTransfer = null;
+      }
     },
     async updateTicketStatus(ticket, status, observation = '') {
       try {

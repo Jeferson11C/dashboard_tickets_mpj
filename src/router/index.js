@@ -1,18 +1,12 @@
 import { createRouter, createWebHistory } from "vue-router";
-import HomeComponent from "../public/pages/home.component.vue";
-import panelComponent from "../panel/pages/reporte.component.vue";
-import admiComponent from "../administrador/pages/admi.component.vue";
-import LoginComponent from "../login/pages/login.component.vue";
-import graficoComponent from "../panel/pages/grafico.component.vue";
-import historialComponent from "../historial/pages/historial.component.vue";
 
 const routes = [
-    { path: "/", name: "login", component: LoginComponent, meta: { title: "Login" } },
-    { path: "/home", name: "home", component: HomeComponent, meta: { title: "Home" } },
-    { path: "/reporte", name: "reporte", component: panelComponent, meta: { title: "Reporte" } },
-    { path: "/administrador", name: "administrador", component: admiComponent, meta: { title: "Administrador" } },
-    { path: "/grafico", name: "grafico", component: graficoComponent, meta: { title: "Grafico" } },
-    {path: "/historial", name: "historial", component: historialComponent, meta: { title: "Historial" }}
+    { path: "/", name: "login", component: () => import("../login/pages/login.component.vue"), meta: { title: "Login" } },
+    { path: "/home", name: "home", component: () => import("../public/pages/home.component.vue"), meta: { title: "Home", requiresAuth: true } },
+    { path: "/reporte", name: "reporte", component: () => import("../panel/pages/reporte.component.vue"), meta: { title: "Reporte", requiresAuth: true } },
+    { path: "/administrador", name: "administrador", component: () => import("../administrador/pages/admi.component.vue"), meta: { title: "Administrador", requiresAuth: true } },
+    { path: "/grafico", name: "grafico", component: () => import("../panel/pages/grafico.component.vue"), meta: { title: "Grafico", requiresAuth: true } },
+    { path: "/historial", name: "historial", component: () => import("../historial/pages/historial.component.vue"), meta: { title: "Historial", requiresAuth: true } }
 ];
 
 const router = createRouter({
@@ -28,6 +22,15 @@ router.beforeEach((to, from, next) => {
     const userRole = localStorage.getItem('userRole');
     if (to.path === '/administrador' && userRole !== 'Administrador') {
         next('/'); // Redirect to home if not an admin
+    } else {
+        next();
+    }
+});
+
+router.beforeEach((to, from, next) => {
+    const isAuthenticated = !!localStorage.getItem('token');
+    if (to.matched.some(record => record.meta.requiresAuth) && !isAuthenticated) {
+        next({ name: 'login' });
     } else {
         next();
     }

@@ -4,38 +4,40 @@
     <form @submit.prevent="updateUser">
       <div class="form-row">
         <div class="form-group">
-          <label for="nombre">Nombre</label>
-          <input type="text" id="nombre" v-model="user.nombre" @input="validateLettersAndSpaces($event, 'nombre')" required />
+          <label for="dni">DNI: </label>
+          <input type="text" id="dni" v-model="user.dni" readonly />
         </div>
         <div class="form-group">
-          <label for="apePaterno">Apellido Paterno</label>
-          <input type="text" id="apePaterno" v-model="user.apePaterno" @input="validateLettersAndSpaces($event, 'apePaterno')" required />
+          <label for="nombreCompleto">Nombre Completo</label>
+          <input type="text" id="nombreCompleto" v-model="user.nombreCompleto" readonly />
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group">
-          <label for="apeMaterno">Apellido Materno</label>
-          <input type="text" id="apeMaterno" v-model="user.apeMaterno" @input="validateLettersAndSpaces($event, 'apeMaterno')" required />
-        </div>
         <div class="form-group">
           <label for="username">Nombre de Usuario</label>
-          <input type="text" id="username" v-model="user.username"  required />
+          <input type="text" id="username" v-model="user.username" required />
         </div>
-      </div>
-      <div class="form-row">
         <div class="form-group">
           <label for="password">Contraseña</label>
           <input type="password" id="password" v-model="user.password" required />
         </div>
-        <div class="form-group">
-          <label for="area">Área</label>
-          <pv-dropdown id="area" v-model="user.area" :options="areas" optionLabel="nombre" placeholder="Seleccione un área" required />
-        </div>
       </div>
       <div class="form-row">
         <div class="form-group">
+          <label for="area">Área</label>
+          <div class="select-wrapper">
+            <select v-model="user.area" required>
+              <option v-for="area in areas" :key="area.nombre" :value="area.nombre">{{ area.nombre }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
           <label for="rol">Rol</label>
-          <pv-dropdown id="rol" v-model="user.rol" :options="roles" placeholder="Seleccione un rol" required />
+          <div class="select-wrapper">
+            <select v-model="user.rol" required>
+              <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="form-button">
@@ -47,8 +49,9 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import UserApiService from '../services/user-api.service';
+import WebSocketService from '../../shared/websocket.service';
 
 export default {
   name: 'updateUser',
@@ -62,6 +65,9 @@ export default {
   setup(props, { emit }) {
     const roles = ref(['Seleccione una opción', 'Administrador', 'Recepcionista']);
     const areas = ref([]);
+    const user = ref({ ...props.user });
+    const webSocketService = new WebSocketService();
+    webSocketService.connect();
 
     const fetchAreas = async () => {
       try {
@@ -73,25 +79,22 @@ export default {
     };
 
     const updateUser = async () => {
-      console.log('User object:', props.user); // Verify that the ID is present
-      if (!props.user.id) {
+      if (!user.value.id) {
         console.error('User ID is missing');
         return;
       }
       try {
         const userData = {
-          Id: props.user.id,
-          Nombre: props.user.nombre,
-          ApePaterno: props.user.apePaterno,
-          ApeMaterno: props.user.apeMaterno,
-          Username: props.user.username,
-          Password: props.user.password,
-          Rol: props.user.rol,
-          Area: props.user.area?.nombre || '', // Send only the area name as a string
+          username: user.value.username,
+          password: user.value.password,
+          rol: user.value.rol,
+          area: user.value.area,
+          estado: user.value.estado || 'Activo',
         };
-        console.log('Sending user data:', userData); // Verify the data being sent
-        await UserApiService.updateUser(props.user.id, userData); // Pass the ID and data
-        emit('userUpdated', props.user);
+        console.log('Sending user data:', userData);
+        await UserApiService.updateUser(user.value.id, userData);
+        webSocketService.sendMessage(JSON.stringify({ event: 'userUpdated', data: userData }));
+        emit('userUpdated', user.value);
       } catch (error) {
         console.error('Error updating user:', error);
         if (error.response) {
@@ -105,19 +108,11 @@ export default {
       emit('closeModal');
     };
 
-    const validateLettersAndSpaces = (event, field) => {
-      const regex = /^[A-Za-z\s]*$/;
-      if (!regex.test(event.target.value)) {
-        props.user[field] = event.target.value.replace(/[^A-Za-z\s]/g, '');
+    watch(() => props.user, (newUser) => {
+      if (newUser) {
+        user.value = { ...newUser };
       }
-    };
-
-    const validateUsername = (event) => {
-      const regex = /^[A-Za-z0-9]*$/;
-      if (!regex.test(event.target.value)) {
-        props.user.username = event.target.value.replace(/[^A-Za-z0-9]/g, '');
-      }
-    };
+    }, { immediate: true });
 
     onMounted(() => {
       fetchAreas();
@@ -126,10 +121,9 @@ export default {
     return {
       roles,
       areas,
+      user,
       updateUser,
       closeModal,
-      validateLettersAndSpaces,
-      validateUsername,
     };
   },
 };

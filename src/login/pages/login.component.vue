@@ -9,8 +9,8 @@
         <h1>INICIAR SESIÓN</h1>
         <form @submit.prevent="login">
           <div class="input-group">
-            <label for="username">Nombre de usuario</label>
-            <input type="text" v-model="username" id="username" required />
+            <label for="dni">DNI</label>
+            <input type="text" v-model="dni" id="dni" required />
           </div>
           <div class="input-group">
             <label for="password">Contraseña</label>
@@ -32,7 +32,7 @@ export default {
   name: "login",
   data() {
     return {
-      username: '',
+      dni: '',
       password: '',
       errorMessage: ''
     };
@@ -40,26 +40,30 @@ export default {
   methods: {
     async login() {
       try {
-        const response = await LoginApiService.signIn(this.username, this.password);
+        const response = await LoginApiService.signIn(this.dni, this.password);
         const user = response.data;
 
         if (user && user.token && user.id) {
-          localStorage.setItem('token', user.token);
-          localStorage.setItem('userId', user.id);
-
           const userInfoResponse = await UserApiService.fetchUserById(user.id);
           const userInfo = userInfoResponse.data;
 
           if (userInfo && userInfo.rol && userInfo.area) {
+            if (userInfo.estado === 'Inactivo') {
+              this.errorMessage = 'Usuario temporalmente inactivo';
+              return;
+            }
+
+            localStorage.setItem('token', user.token);
+            localStorage.setItem('userId', user.id);
             localStorage.setItem('userRole', userInfo.rol);
             localStorage.setItem('userArea', userInfo.area);
             localStorage.setItem('userFullName', userInfo.nombreCompleto);
-            localStorage.setItem('userUserName', userInfo.username); // Store the username
+            localStorage.setItem('userUserName', userInfo.username);
 
             console.log('User logged in successfully');
 
             this.$emit('user-logged-in', user);
-            this.$router.push({ name: 'home' });
+            this.$router.push({name: 'home'});
           } else {
             throw new Error('Invalid user info');
           }
@@ -68,7 +72,11 @@ export default {
         }
       } catch (error) {
         console.error('Error during login:', error);
-        this.errorMessage = 'Nombre de usuario o contraseña incorrectos';
+        if (error.response && error.response.data && error.response.data.message) {
+          this.errorMessage = error.response.data.message;
+        } else {
+          this.errorMessage = 'DNI o contraseña incorrectos';
+        }
       }
     }
   }
@@ -165,10 +173,10 @@ input {
 .login-button:hover {
   background: linear-gradient(to right, #0056a4, #003e7e);
 }
+
 .error-message {
   color: red;
   margin-top: 1em;
   text-align: center;
 }
-
 </style>

@@ -37,7 +37,7 @@
     <div v-if="showTransferSuccessModal" class="modal">
       <div class="modal-content">
         <h3>Transferido exitosamente</h3>
-        <pv-button @click="closeTransferSuccessModal">Aceptar</pv-button>
+        <pv-button @click="confirmTransfer">Aceptar</pv-button>
       </div>
     </div>
   </div>
@@ -144,8 +144,8 @@ export default {
           });
           this.webSocketService.sendMessage(message);
 
-          // Notify parent component about the updated ticket
-          this.$emit('ticket-updated', this.localSelectedTicket);
+          // Emit an event to notify that the ticket has been transferred
+          this.$emit('ticket-transferred', this.localSelectedTicket);
 
         } catch (error) {
           console.error('Error transferring ticket:', error);
@@ -154,6 +154,10 @@ export default {
           }
         }
       }
+    },
+    confirmTransfer() {
+      this.showTransferSuccessModal = false;
+      this.$emit('confirm-transfer');
     },
     closeTransferSuccessModal() {
       this.showTransferSuccessModal = false;

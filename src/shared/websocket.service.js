@@ -11,6 +11,10 @@ class WebSocketService {
         this.socket.onclose = () => console.log("WebSocket connection closed.");
     }
 
+    onMessage(callback) {
+        this.socket.onmessage = callback;
+    }
+
     sendMessage(message) {
         if (this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(message);

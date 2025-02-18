@@ -52,6 +52,7 @@
         </div>
       </div>
       <pv-button icon="pi pi-download" label="Descargar PDF" class="download-btn" @click="downloadPDF" />
+      <pv-button icon="pi pi-file-excel" label="Descargar Excel" class="download-btn" @click="downloadExcel" />
     </div>
 
     <AreaReport v-for="area in filteredAreas" :key="area.id" :area="area" :tickets="filteredTickets" />
@@ -64,6 +65,7 @@ import 'jspdf-autotable';
 import TicketApiService from '../../public/services/ticket-api.service';
 import AreaReport from '../components/AreaReport.component.vue';
 import dayjs from 'dayjs';
+import * as XLSX from 'xlsx';
 
 export default {
   name: "reporte",
@@ -190,11 +192,12 @@ export default {
         doc.text(`Área: ${area}`, 10, 20);
         doc.autoTable({
           startY: 30,
-          head: [['Número de Ticket', 'Fecha', 'Documento', 'Nombres', 'Apellido Paterno', 'Apellido Materno', 'Estado']],
+          head: [['Número de Ticket', 'Fecha','Fecha de atencion', 'Documento', 'Nombres', 'Apellido Paterno', 'Apellido Materno', 'Estado']],
           body: this.filteredTickets
               .filter(ticket => ticket.areaNombre === area)
               .map(ticket => [
                 ticket.numeroTicket,
+                ticket.fecha,
                 ticket.updatedAt,
                 ticket.documento,
                 ticket.nombres,
@@ -206,6 +209,24 @@ export default {
       });
 
       doc.save('reporte_general.pdf');
+    },
+    downloadExcel() {
+      const ws = XLSX.utils.json_to_sheet(this.filteredTickets.map(ticket => ({
+        'Número de Ticket': ticket.numeroTicket,
+        'Área': ticket.areaNombre,
+        'Fecha': ticket.fecha,
+        'Fecha de atencion': ticket.updatedAt,
+        'Documento': ticket.documento,
+        'Nombres': ticket.nombres,
+        'Apellido Paterno': ticket.apePaterno,
+        'Apellido Materno': ticket.apeMaterno,
+        'Estado': ticket.estado
+      })));
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Reporte de Tickets');
+
+      XLSX.writeFile(wb, 'reporte_general.xlsx');
     }
   }
 }

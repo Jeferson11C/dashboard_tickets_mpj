@@ -1,22 +1,25 @@
 <template>
   <div class="toolbar">
-    <div class="title">Municipalidad de Jaen</div>
+    <div class="title">Municipalidad de Jaén</div>
     <div v-if="user" class="user-info">
       <span>
-        <span>👤</span> {{ user.nombreCompleto }}
+        <span>🙍‍♂️</span> {{ user.nombreCompleto }}
         <span>🏢</span> {{ user.area }}
         <span>🪪</span> {{ user.rol }}
       </span>
-      <button class="logout-button" @click="logout">
-        <i class="pi pi-sign-out"></i> Cerrar sesión
-      </button>
+      <log-out @user-logged-out="handleLogout"></log-out>
     </div>
   </div>
 </template>
 
 <script>
+import logOut from '../../login/Component/logOut.vue';
+
 export default {
   name: "Toolbar",
+  components: {
+    logOut
+  },
   props: {
     user: {
       type: Object,
@@ -24,16 +27,8 @@ export default {
     }
   },
   methods: {
-    logout() {
-      console.clear(); // Clear the console
-      console.log('Logout successful'); // Display logout message
-      localStorage.removeItem('token'); // Remove the token
-      localStorage.removeItem('userId'); // Remove the user id
-      localStorage.removeItem('userRole'); // Remove the user role
-      localStorage.removeItem('userArea'); // Remove the user area
-      localStorage.removeItem('userFullName'); // Remove the user full name
+    handleLogout() {
       this.$emit('user-logged-out');
-      this.$router.push({ name: 'login' }); // Redirect to login page
     }
   }
 }
@@ -49,6 +44,7 @@ export default {
   border-bottom: 1px solid #34495e;
   color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: 80px;
 }
 
 .title {
@@ -70,24 +66,6 @@ export default {
   gap: 0.5em;
 }
 
-.logout-button {
-  background-color: #ffffff;
-  color: #666666;
-  border: none;
-  padding: 0.5em 1em;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-}
-
-.logout-button:hover {
-  background-color: #ffffff;
-}
-
-/* Responsividad */
 @media (max-width: 768px) {
   .toolbar {
     flex-direction: column;
@@ -100,11 +78,6 @@ export default {
     align-items: flex-start;
     gap: 0.5em;
     margin-top: 0.5em;
-  }
-
-  .logout-button {
-    width: 100%;
-    justify-content: center;
   }
 }
 </style>

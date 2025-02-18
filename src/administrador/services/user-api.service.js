@@ -27,6 +27,11 @@ class UserApiService {
         return http.delete(`/api/user/${id}`);
     }
 
+    async updateUserStatus(id, estado) {
+        return http.put(`/api/user/${id}/estado`, { estado });
+    }
+
+
     // Obtener usuarios por área
     async fetchUsersByArea(area) {
         return http.get(`/api/user/area/${area}`);
@@ -40,6 +45,12 @@ class UserApiService {
     async getAreas() {
         return http.get('/api/area');
     }
+
+    async getUserDataByDni(dni) {
+        return http.post('/api/proxy/dni', { codigo: dni });
+    }
+
+
 
 
 }

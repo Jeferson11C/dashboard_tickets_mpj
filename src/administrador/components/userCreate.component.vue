@@ -1,235 +1,230 @@
 <template>
   <div class="user-create">
-    <h2>Crear Usuario</h2>
-    <form @submit.prevent="createUser">
-      <div class="form-group">
-        <label for="nombre">Nombre</label>
-        <input type="text" id="nombre" v-model="user.nombre" @input="validateLettersAndSpaces($event, 'nombre')" required />
-      </div>
-      <div class="form-group">
-        <label for="apePaterno">Apellido Paterno</label>
-        <input type="text" id="apePaterno" v-model="user.apePaterno" @input="validateLettersAndSpaces($event, 'apePaterno')" required />
-      </div>
-      <div class="form-group">
-        <label for="apeMaterno">Apellido Materno</label>
-        <input type="text" id="apeMaterno" v-model="user.apeMaterno" @input="validateLettersAndSpaces($event, 'apeMaterno')" required />
-      </div>
-      <div class="form-group">
-        <label for="username">Nombre de Usuario</label>
-        <input type="text" id="username" v-model="user.username"  required />
-      </div>
-      <div class="form-group">
-        <label for="password">Contraseña</label>
-        <input type="password" id="password" v-model="user.password" required />
-      </div>
-      <div class="form-group">
-        <label for="area">Área</label>
-        <pv-input-group>
-          <pv-dropdown id="area" v-model="user.area" :options="areas" optionLabel="nombre" placeholder="Seleccione un área" required />
-        </pv-input-group>
-      </div>
-      <div class="form-group">
-        <label for="rol">Rol</label>
-        <pv-input-group>
-          <pv-dropdown id="rol" v-model="user.rol" :options="roles" placeholder="Seleccione un rol" required />
-        </pv-input-group>
-      </div>
-      <div class="form-button">
-        <button type="submit">Crear</button>
-      </div>
-    </form>
+    <div class="form-container">
+      <h2 class="title">Crear Usuario</h2>
+      <form @submit.prevent="createUser">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="dni">DNI</label>
+            <div class="input-wrapper">
+              <input type="text" id="dni" v-model="user.dni" @input="validateDNI" placeholder="Ingrese DNI" :class="{ 'error': dniError }" required/>
+              <span v-if="dniError" class="error-message">DNI inválido</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <div class="input-wrapper">
+              <input type="text" id="nombre" v-model="user.nombre" placeholder="Nombre" readonly required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="apePaterno">Apellido Paterno</label>
+            <div class="input-wrapper">
+              <input type="text" id="apePaterno" v-model="user.apePaterno" placeholder="Apellido Paterno" readonly required/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="apeMaterno">Apellido Materno</label>
+            <div class="input-wrapper">
+              <input type="text" id="apeMaterno" v-model="user.apeMaterno" placeholder="Apellido Materno" readonly required/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="username">Nombre de Usuario</label>
+            <div class="input-wrapper">
+              <input type="text" id="username" v-model="user.username" placeholder="Nombre de usuario" @input="validateUsername" required/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <div class="input-wrapper">
+              <input type="password" id="password" v-model="user.password" placeholder="Contraseña" required/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="area">Área</label>
+            <div class="select-wrapper">
+              <select id="area" v-model="user.area" required>
+                <option v-for="area in areas" :key="area.nombre" :value="area.nombre">
+                  {{ area.nombre }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="rol">Rol</label>
+            <div class="select-wrapper">
+              <select id="rol" v-model="user.rol" required>
+                <option v-for="role in roles" :key="role" :value="role">
+                  {{ role }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="submit-button">
+            Crear Usuario
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
-import UserApiService from '../services/user-api.service';
+import useUserCreate from '../scripts/userCreate.script.js';
 
 export default {
   name: 'UserCreate',
   setup() {
-    const user = ref({
-      nombre: '',
-      apePaterno: '',
-      apeMaterno: '',
-      username: '',
-      password: '',
-      area: null,
-      rol: null
-    });
-
-    const areas = ref([{ nombre: 'Seleccione una opción', id: null }]);
-    const roles = ref(['Seleccione una opción', 'Administrador', 'Recepcionista']);
-
-    const fetchAreas = async () => {
-      try {
-        const response = await UserApiService.getAreas();
-        areas.value = areas.value.concat(response.data);
-      } catch (error) {
-        console.error('Error fetching areas:', error);
-      }
-    };
-
-    onMounted(() => {
-      fetchAreas();
-    });
-
-    return {
-      user,
-      areas,
-      roles,
-      fetchAreas
-    };
-  },
-  methods: {
-    async createUser() {
-      const requestData = {
-        nombre: this.user.nombre,
-        apePaterno: this.user.apePaterno,
-        apeMaterno: this.user.apeMaterno,
-        username: this.user.username,
-        password: this.user.password,
-        area: this.user.area.nombre, // Extract the nombre from the area object
-        rol: this.user.rol
-      };
-
-      try {
-        console.log('User data being sent:', requestData); // Log the user data
-        const response = await UserApiService.createUser(requestData);
-        const newUser = response.data;
-
-        this.$emit('userCreated', newUser); // Emit an event with the new user data
-
-        this.user.id = newUser.id;
-        this.user.nombre = newUser.nombre;
-        this.user.apePaterno = newUser.apePaterno;
-        this.user.apeMaterno = newUser.apeMaterno;
-        this.user.username = newUser.username;
-        this.user.password = newUser.password;
-        this.user.area = newUser.area;
-        this.user.rol = newUser.rol;
-
-        console.log('User created successfully');
-      } catch (error) {
-        console.error('Error creating user:', error);
-      }
-
-      this.user.nombre = '';
-      this.user.apePaterno = '';
-      this.user.apeMaterno = '';
-      this.user.username = '';
-      this.user.password = '';
-      this.user.area = null;
-      this.user.rol = null;
-    },
-    validateLettersAndSpaces(event, field) {
-      const regex = /^[A-Za-z\s]*$/;
-      if (!regex.test(event.target.value)) {
-        this.user[field] = event.target.value.replace(/[^A-Za-z\s]/g, '');
-      }
-    },
-    validateUsername(event) {
-      const regex = /^[A-Za-z0-9]*$/;
-      if (!regex.test(event.target.value)) {
-        this.user.username = event.target.value.replace(/[^A-Za-z0-9]/g, '');
-      }
-    }
+    return useUserCreate();
   }
 };
 </script>
 
 <style scoped>
 .user-create {
-  padding: 1em;
-  background-color: lightgrey;
-}
-.user-create {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 1.5rem;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-height: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
 }
 
-.user-create h2 {
-  color: #2c3e50;
-  font-size: 1.25rem;
-  margin-bottom: 1.5rem;
+.form-container {
+  width: 100%;
+  max-width: 900px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 2rem;
+}
+
+.title {
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 600;
   text-align: center;
-  font-weight: 500;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
 }
 
-form {
+.form-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
 }
 
 label {
-  color: #4a5568;
+  color: #4b5563;
   font-size: 0.875rem;
   font-weight: 500;
 }
 
-input {
-  padding: 0.5rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  background-color: #fff;
+.input-wrapper {
+  position: relative;
 }
 
-input:focus {
+input, select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  background-color: white;
+}
+
+input:focus, select:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.form-button {
-  grid-column: span 2;
+input::placeholder {
+  color: #9ca3af;
+}
+
+input.error {
+  border-color: #ef4444;
+}
+
+.error-message {
+  position: absolute;
+  bottom: -1.25rem;
+  left: 0;
+  color: #ef4444;
+  font-size: 0.75rem;
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #6b7280;
+  pointer-events: none;
+}
+
+select {
+  appearance: none;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.form-actions {
   display: flex;
   justify-content: center;
-  margin-top: 1rem;
+  margin-top: 2rem;
 }
 
-button {
-  padding: 0.5rem 2rem;
+.submit-button {
+  padding: 0.75rem 2.5rem;
   background-color: #3b82f6;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  min-width: 200px;
 }
 
-button:hover {
+.submit-button:hover {
   background-color: #2563eb;
+  transform: translateY(-1px);
 }
 
-/* Responsive */
-@media screen and (max-width: 640px) {
-  .user-create {
-    margin: 1rem;
-    padding: 1rem;
-  }
-
-  form {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  .form-button {
-    grid-column: 1;
-    margin-top: 0.75rem;
-  }
+.submit-button:active {
+  transform: translateY(0);
 }
+
 </style>

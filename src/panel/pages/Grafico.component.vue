@@ -1,8 +1,8 @@
 <template>
-  <div class="grafico-container">
-    <h1 class="main-title">Grafica de Tickets Atendidos</h1>
+  <div class="grafico-container" >
+    <h1 class="main-title">Grafica de Tickets Atendidos </h1 >
 
-    <div class="filters">
+    <div class="filters" v-if="userRole === 'Administrador'">
       <div class="filter">
         <label for="month">Mes:</label>
         <select id="month" v-model="selectedMonth">
@@ -18,24 +18,28 @@
         </select>
       </div>
     </div>
-
     <!-- Gráfico -->
-    <div class="chart-container">
+    <div class="chart-container" v-if="userRole === 'Administrador'">
       <BarChart v-if="hasData" :chartData="chartData" :chartOptions="chartOptions" />
       <p v-else class="no-data-message">No hay datos disponibles para el mes y año seleccionados.</p>
     </div>
+    <!-- Dashboard Component -->
+    <Dashboard />
   </div>
 </template>
 
 <script>
 import BarChart from '../components/BarChart.vue';
+import Dashboard from '../components/Dashboard.vue';
 import TicketApiService from '../../public/services/ticket-api.service';
+import WebSocketService from '../../shared/websocket.service';
 import dayjs from 'dayjs';
 
 export default {
   name: "Grafico",
   components: {
-    BarChart
+    BarChart,
+    Dashboard
   },
   data() {
     return {
@@ -72,10 +76,22 @@ export default {
         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
       ],
       years: [],
-      hasData: false
+      hasData: false,
+      socket: null,
+      userRole: localStorage.getItem('userRole') // Get user role from localStorage
     };
   },
   async mounted() {
+    const webSocketService = new WebSocketService(); // Create an instance of WebSocketService
+    webSocketService.connect(); // Call the connect method
+    this.socket = webSocketService.socket; // Assign the socket to this.socket
+
+    this.socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      this.tickets = data;
+      this.updateChartData();
+    };
+
     await this.fetchTickets();
     await this.fetchAreas();
     this.generateYears();
@@ -144,6 +160,11 @@ export default {
         this.chartData.datasets[0].data = [];
         this.chartData.datasets[1].data = [];
       }
+    }
+  },
+  beforeDestroy() {
+    if (this.socket) {
+      this.socket.close();
     }
   }
 }
