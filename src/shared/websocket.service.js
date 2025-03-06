@@ -1,4 +1,3 @@
-// src/services/WebSocketService.js
 class WebSocketService {
     constructor() {
         this.url = "ws://localhost:5281";

@@ -8,18 +8,6 @@ class LoginApiService {
         return response;
     }
 
-    static async signOut() {
-        const token = localStorage.getItem('token');
-        if (token) {
-            await http.post('/api/user/sign-out', {}, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            localStorage.removeItem('token'); // Remove the token
-        }
-    }
-
 }
 
 export default LoginApiService;

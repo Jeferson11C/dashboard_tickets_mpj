@@ -4,7 +4,7 @@ const routes = [
     { path: "/", name: "login", component: () => import("../login/pages/login.component.vue"), meta: { title: "Login" } },
     { path: "/home", name: "home", component: () => import("../public/pages/home.component.vue"), meta: { title: "Home", requiresAuth: true } },
     { path: "/reporte", name: "reporte", component: () => import("../panel/pages/reporte.component.vue"), meta: { title: "Reporte", requiresAuth: true } },
-    { path: "/administrador", name: "administrador", component: () => import("../administrador/pages/admi.component.vue"), meta: { title: "Administrador", requiresAuth: true } },
+    { path: "/administrador", name: "administrador", component: () => import("../administrador/pages/admi.component.vue"), meta: { title: "Usuarios", requiresAuth: true } },
     { path: "/grafico", name: "grafico", component: () => import("../panel/pages/grafico.component.vue"), meta: { title: "Grafico", requiresAuth: true } },
     { path: "/historial", name: "historial", component: () => import("../historial/pages/historial.component.vue"), meta: { title: "Historial", requiresAuth: true } }
 ];

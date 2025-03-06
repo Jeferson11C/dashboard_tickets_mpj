@@ -1,12 +1,16 @@
 import { createApp } from 'vue';
+import './style.css';
 import App from './App.vue';
 import PrimeVue from 'primevue/config';
 import 'primeicons/primeicons.css';
 import axios from 'axios';
 import router from './router/index.js';
+import { createPinia } from 'pinia';
+
 
 //primevue theme
-
+import '@fortawesome/fontawesome-free/css/all.css';
+import '@fortawesome/fontawesome-free/js/all.js';
 
 
 import Column from 'primevue/column';
@@ -29,12 +33,16 @@ import MultiSelect from 'primevue/multiselect';
 import Tag from 'primevue/tag';
 import Select from 'primevue/select';
 import Checkbox from 'primevue/checkbox';
+import paginator from 'primevue/paginator';
 
 const app = createApp(App);
 
+
 app.use(PrimeVue, { ripple: true });
+app.use(createPinia());
 app.use(axios);
 app.use(router);
+
 
 app.component('pv-column', Column);
 app.component('pv-column-group', ColumnGroup);
@@ -54,7 +62,8 @@ app.component('pv-card', Card);
 app.component('calendar', Calendar);
 app.component('pv-multi-select', MultiSelect);
 app.component('pv-tag', Tag);
-app.component('pv-select', Select);
+app.component('select', Select);
 app.component('pv-checkbox', Checkbox);
+app.component('paginator', paginator);
 
 app.mount('#app');

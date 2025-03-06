@@ -5,10 +5,10 @@
 </template>
 
 <script>
-import { Chart as ChartJS, Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement, Filler } from 'chart.js';
+import { Chart as ChartJS, Title,LineController, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement, Filler } from 'chart.js';
 import { defineComponent, onMounted, ref, watch } from "vue";
 
-ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement, Filler);
+ChartJS.register(Title, Tooltip, Legend,LineController, LineElement, CategoryScale, LinearScale, PointElement, Filler);
 
 export default defineComponent({
   name: "LineChart",

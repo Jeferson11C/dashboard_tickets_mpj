@@ -179,6 +179,11 @@ export default {
     countTotalTicketsByStatus(status) {
       return this.filteredTickets.filter(ticket => ticket.estado === status).length;
     },
+    formatDate(dateString) {
+      if (!dateString) return '---';
+      const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+      return new Date(dateString).toLocaleString('es-ES', options);
+    },
     downloadPDF() {
       const doc = new jsPDF({ orientation: 'landscape' });
       doc.text('Reporte General de Tickets', 10, 10);
@@ -192,17 +197,15 @@ export default {
         doc.text(`Área: ${area}`, 10, 20);
         doc.autoTable({
           startY: 30,
-          head: [['Número de Ticket', 'Fecha','Fecha de atencion', 'Documento', 'Nombres', 'Apellido Paterno', 'Apellido Materno', 'Estado']],
+          head: [['Número de Ticket', 'Fecha', 'Fecha de atencion', 'Documento', 'Nombre', 'Estado']],
           body: this.filteredTickets
               .filter(ticket => ticket.areaNombre === area)
               .map(ticket => [
                 ticket.numeroTicket,
-                ticket.fecha,
-                ticket.updatedAt,
+                this.formatDate(ticket.fecha),
+                ticket.updatedAt ? this.formatDate(ticket.updatedAt) : '---',
                 ticket.documento,
-                ticket.nombres,
-                ticket.apePaterno,
-                ticket.apeMaterno,
+                `${ticket.nombres} ${ticket.apePaterno} ${ticket.apeMaterno}`,
                 ticket.estado
               ])
         });
@@ -214,8 +217,8 @@ export default {
       const ws = XLSX.utils.json_to_sheet(this.filteredTickets.map(ticket => ({
         'Número de Ticket': ticket.numeroTicket,
         'Área': ticket.areaNombre,
-        'Fecha': ticket.fecha,
-        'Fecha de atencion': ticket.updatedAt,
+        'Fecha': this.formatDate(ticket.fecha),
+        'Fecha de atencion': ticket.updatedAt ? this.formatDate(ticket.updatedAt) : '---',
         'Documento': ticket.documento,
         'Nombres': ticket.nombres,
         'Apellido Paterno': ticket.apePaterno,

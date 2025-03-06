@@ -47,8 +47,9 @@ class UserApiService {
     }
 
     async getUserDataByDni(dni) {
-        return http.post('/api/proxy/dni', { codigo: dni });
+        return http.post('/api/proxy/dni', { dni: dni });
     }
+
 
 
 

@@ -2,25 +2,27 @@
   <div class="content">
     <div class="row">
       <div class="col-12">
-        <div class="filters" >
-          <div class="filter"v-if="userRole !== 'Recepcionista'">
-            <label for="area">Área:</label>
-            <select id="area" v-model="selectedArea">
-              <option value="">Todas</option>
-              <option v-for="area in areas" :key="area.id" :value="area.nombre">{{ area.nombre }}</option>
-            </select>
-          </div>
-          <div class="filter">
-            <label for="year">Año:</label>
-            <select id="year" v-model="selectedYear">
-              <option value="">Todos</option>
-              <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
-            </select>
-          </div>
-        </div>
         <div class="chart-card">
           <card type="chart">
-            <h5 class="card-category">Desempeño en Atención de Tickets Mensual</h5>
+            <div class="card-header">
+              <h5 class="card-category">Tendencia Mensual de Tickets Resueltos y Cancelados</h5>
+              <div class="filters">
+                <div class="filter" v-if="userRole !== 'Recepcionista'">
+                  <label for="area">Área:</label>
+                  <select id="area" v-model="selectedArea" class="select-filter">
+                    <option value="">Todas</option>
+                    <option v-for="area in areas" :key="area.id" :value="area.nombre">{{ area.nombre }}</option>
+                  </select>
+                </div>
+                <div class="filter">
+                  <label for="year">Año:</label>
+                  <select id="year" v-model="selectedYear" class="select-filter">
+                    <option value="">Todos</option>
+                    <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
             <line-chart
                 class="chart-area"
                 ref="bigChart"
@@ -72,7 +74,7 @@ export default {
               }
             }
           },
-
+          maintainAspectRatio: false,
         },
         gradientColors: config.colors.primaryGradient,
         gradientStops: [1, 0.4, 0],
@@ -102,7 +104,7 @@ export default {
     async fetchAreas() {
       try {
         const response = await TicketApiService.getAreas();
-        this.areas = response.data;
+        this.areas = response.data.filter(area => area.nombre !== 'General');
       } catch (error) {
         console.error('Error fetching areas:', error);
       }
@@ -114,6 +116,13 @@ export default {
         yearsSet.add(year);
       });
       this.years = Array.from(yearsSet).sort((a, b) => b - a);
+      // Set current year as default if available
+      const currentYear = new Date().getFullYear();
+      if (this.years.includes(currentYear)) {
+        this.selectedYear = currentYear;
+      } else if (this.years.length > 0) {
+        this.selectedYear = this.years[0];
+      }
     },
     updateChartData() {
       const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -185,12 +194,24 @@ export default {
       webSocketService.connect();
       this.socket = webSocketService.socket;
 
+      this.socket.onopen = () => {
+        console.log('WebSocket connection established');
+      };
+
       this.socket.onmessage = (event) => {
         const message = JSON.parse(event.data);
         if (message.entityName === 'Ticket' && message.action === 'Updated') {
           const updatedTicket = message.entity;
           this.updateSingleTicket(updatedTicket);
         }
+      };
+
+      this.socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      this.socket.onclose = () => {
+        console.log('WebSocket connection closed');
       };
     },
     updateSingleTicket(ticket) {
@@ -237,28 +258,89 @@ export default {
 }
 
 .chart-area {
-  height: 300px;
+  height: 350px;
+  margin-top: 10px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.card-category {
+  font-size: 1.2rem;
+  color: #555;
+  margin: 0;
+  font-weight: 600;
 }
 
 .filters {
   display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 15px;
+  align-items: center;
 }
 
 .filter {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .filter label {
-  margin-bottom: 5px;
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+  margin: 0;
+}
+
+.select-filter {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background-color: #f8f9fa;
+  font-size: 0.9rem;
+  min-width: 120px;
+  cursor: pointer;
+  color: #444;
+  transition: all 0.3s ease;
+}
+
+.select-filter:hover, .select-filter:focus {
+  border-color: #aaa;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
 
 .chart-card {
   background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
+@media (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .filters {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .filter {
+    margin-right: 10px;
+    margin-bottom: 10px;
+  }
 }
 </style>

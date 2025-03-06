@@ -1,48 +1,3 @@
-<template>
-  <div class="ticket-details" v-if="selectedTicket">
-    <h3>Detalles del Ticket</h3>
-    <p><strong>Número de Ticket:</strong> {{ selectedTicket.numeroTicket }}</p>
-    <p><strong>Área:</strong> {{ selectedTicket.areaNombre }}</p>
-    <p><strong>Fecha:</strong> {{ selectedTicket.fecha }}</p>
-    <p><strong>Nombre:</strong> {{ selectedTicket.nombres }} {{ selectedTicket.apePaterno }} {{ selectedTicket.apeMaterno }}</p>
-    <p><strong>Estado:</strong> {{ selectedTicket.estado }}</p>
-    <div v-if="selectedTicket.estado === 'Resuelto' || selectedTicket.estado === 'Cancelado'">
-      <h4>Observaciones:</h4>
-      <ul>
-        <li v-for="comment in comments" :key="comment.id">{{ comment.coment }}</li>
-      </ul>
-    </div>
-    <div class="actions" v-if="selectedTicket.estado !== 'Resuelto' && selectedTicket.estado !== 'Cancelado'">
-      <pv-button @click="showObservationModal('resolve')">Resolver</pv-button>
-      <pv-button @click="showObservationModal('cancel')">Cancelar</pv-button>
-      <pv-button v-if="selectedTicket.estado === 'Abierto'" @click="$emit('reopen-ticket')">Reabrir</pv-button>
-      <div class="transfer">
-        <pv-button @click="toggleTransferDropdown">Transferir</pv-button>
-        <div v-if="showTransferDropdown" class="dropdown">
-          <select v-model="selectedArea">
-            <option v-for="area in areas" :key="area.id" :value="area.nombre">{{ area.nombre }}</option>
-          </select>
-          <pv-button @click="transferTicket">Confirmar Transferencia</pv-button>
-        </div>
-      </div>
-    </div>
-    <div v-if="showObservationModalVisible" class="modal">
-      <div class="modal-content">
-        <h3>{{ actionType === 'resolve' ? 'Resolver Ticket' : 'Cancelar Ticket' }}</h3>
-        <textarea v-model="observation" placeholder="Ingrese una observación"></textarea>
-        <pv-button @click="submitObservation">Aceptar</pv-button>
-        <pv-button @click="closeObservationModal">Cancelar</pv-button>
-      </div>
-    </div>
-    <div v-if="showTransferSuccessModal" class="modal">
-      <div class="modal-content">
-        <h3>Transferido exitosamente</h3>
-        <pv-button @click="confirmTransfer">Aceptar</pv-button>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script>
 import CommentApiService from '../services/comment-api.service';
 import TicketApiService from '../services/ticket-api.service';
@@ -174,10 +129,10 @@ export default {
     },
     async submitObservation() {
       if (this.selectedTicket) {
-        const username = localStorage.getItem('userUserName');
+        const nombreCompleto = localStorage.getItem('userFullName');
         const userId = localStorage.getItem('userId');
-        if (!username || !userId) {
-          console.error('Username or userId is not found in localStorage');
+        if (!nombreCompleto || !userId) {
+          console.error('Nombre completo or userId is not found in localStorage');
           return;
         }
         const comment = {
@@ -186,7 +141,7 @@ export default {
           numeroTicket: this.selectedTicket.numeroTicket,
           estado: this.actionType === 'resolve' ? 'Resuelto' : 'Cancelado',
           userId: parseInt(userId, 10),
-          username: username
+          nombreCompleto: nombreCompleto
         };
         console.log('Submitting comment:', comment); // Log the request payload
         try {
@@ -215,56 +170,287 @@ export default {
           console.error('Error submitting observation:', error);
         }
       }
+    },
+    formatDate(dateString) {
+      const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+      return new Date(dateString).toLocaleString('es-ES', options);
     }
   }
 };
 </script>
 
+<template>
+  <div class="ticket-details" v-if="selectedTicket">
+
+    <div class="ticket-content">
+      <div class="ticket-info">
+        <h3>Detalles del Ticket</h3>
+        <p><strong>Número de Ticket:</strong> {{ selectedTicket.numeroTicket }}</p>
+        <p><strong>Área:</strong> {{ selectedTicket.areaNombre }}</p>
+        <p><strong>Documento:</strong> {{ selectedTicket.documento }}</p>
+        <p><strong>Nombre:</strong> {{ selectedTicket.nombres }} {{ selectedTicket.apePaterno }} {{ selectedTicket.apeMaterno }}</p>
+        <p><strong>Fecha:</strong> {{ formatDate(selectedTicket.fecha) }}</p>
+        <p><strong>Estado:</strong> <span class="ticket-status" :class="'status-' + selectedTicket.estado.toLowerCase()">{{ selectedTicket.estado }}</span></p>
+
+        <div v-if="selectedTicket.estado === 'Resuelto' || selectedTicket.estado === 'Cancelado'">
+          <h4>Observaciones:</h4>
+          <ul class="comments-list">
+            <li v-for="comment in comments" :key="comment.id">{{ comment.coment }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="actions-column" v-if="selectedTicket.estado !== 'Resuelto' && selectedTicket.estado !== 'Cancelado'">
+        <button class="action-btn reopen-btn" v-if="selectedTicket.estado === 'Abierto'" @click="$emit('reopen-ticket')">Reabrir</button>
+        <button class="action-btn resolve-btn" @click="showObservationModal('resolve')">Resolver</button>
+        <button class="action-btn cancel-btn" @click="showObservationModal('cancel')">Cancelar</button>
+        <div class="transfer-container">
+          <button class="action-btn transfer-btn" @click="toggleTransferDropdown">Transferir</button>
+          <div v-if="showTransferDropdown" class="transfer-dropdown">
+            <select v-model="selectedArea" class="area-select">
+              <option v-for="area in areas" :key="area.id" :value="area.nombre">{{ area.nombre }}</option>
+            </select>
+            <button class="action-btn confirm-btn" @click="transferTicket">Confirmar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de observación simplificado -->
+    <div v-if="showObservationModalVisible" class="modal">
+      <div class="modal-content">
+        <h3>{{ actionType === 'resolve' ? 'Resolver Ticket' : 'Cancelar Ticket' }}</h3>
+        <textarea v-model="observation" placeholder="Ingrese una observación"></textarea>
+        <div class="modal-buttons">
+          <button class="action-btn confirm-btn" @click="submitObservation">Aceptar</button>
+          <button class="action-btn cancel-btn" @click="closeObservationModal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de transferencia exitosa simplificado -->
+    <div v-if="showTransferSuccessModal" class="modal">
+      <div class="modal-content">
+        <h3>Transferido exitosamente</h3>
+        <pv-button class="action-btn confirm-btn" @click="confirmTransfer">Aceptar</pv-button>
+      </div>
+    </div>
+  </div>
+  <div v-else class="no-ticket-selected">
+    <div class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 5v2"></path><path d="M15 11v2"></path><path d="M15 17v2"></path>
+        <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2z"></path>
+      </svg>
+      <h4>Seleccione un ticket para atender</h4>
+      <p>Los detalles del ticktet y opciones de atencion apareceran aquí </p>
+    </div>
+  </div>
+</template>
+
 <style scoped>
+
+.no-ticket-selected {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.empty-state {
+  width: 100vh;
+  height: 50vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2.5rem;
+  background-color: #f8fafc;
+  border: 3px dashed #1457ff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.empty-state svg {
+  margin-bottom: 1.5rem;
+  color: #94a3b8;
+}
+
+.empty-state h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  color: #334155;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.empty-state p {
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+
 .ticket-details {
   background-color: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 50px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin: 0 auto; /* Centrar horizontalmente */
+  justify-content: center; /* Centrar contenido */
+  border: 2px solid #1457ff;
+}
+
+.ticket-content {
+  display: flex;
+}
+
+.ticket-info {
+  flex: 1;
 }
 
 .ticket-details h3 {
   color: #1e293b;
-  margin: 0 0 1.5rem 0;
-  font-size: 1.25rem;
+  margin: 0 0 16px 0;
+  font-size: 24px;
 }
+
 
 .ticket-details p {
   color: #475569;
-  margin: 0.75rem 0;
-  font-size: 1rem;
+  margin: 8px 0;
+  font-size: 20px;
 }
 
 .ticket-details strong {
   color: #1e293b;
 }
 
-.actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
+.ticket-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
 }
 
-.transfer {
+.status-abierto {
+  background-color: #dbeafe;
+  color: #1e40af;
+
+}
+
+.status-resuelto {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-cancelado {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.comments-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.comments-list li {
+  padding: 8px;
+  margin-bottom: 8px;
+  background-color: #f8fafc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.actions-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 16px;
+  width: 150px;
+}
+
+.action-btn {
+  width: 100%;
+  text-align: center;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+:deep(.resolve-btn) {
+  background-color: #10b981;
+  color: white;
+}
+
+:deep(.resolve-btn:hover) {
+  background-color: #059669;
+}
+
+:deep(.cancel-btn) {
+  background-color: #ef4444;
+  color: white;
+}
+
+:deep(.cancel-btn:hover) {
+  background-color: #dc2626;
+}
+
+:deep(.reopen-btn) {
+  background-color: #3b82f6;
+  color: white;
+}
+
+:deep(.reopen-btn:hover) {
+  background-color: #2563eb;
+}
+
+:deep(.transfer-btn) {
+  background-color: #f59e0b;
+  color: white;
+}
+
+:deep(.transfer-btn:hover) {
+  background-color: #d97706;
+}
+
+:deep(.confirm-btn) {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.transfer-container {
   position: relative;
 }
 
-.dropdown {
+.transfer-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
+  width: 100%;
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-top: 0.5rem;
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 10;
+}
+
+.area-select {
+  width: 100%;
+  padding: 6px;
+  margin-bottom: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 .modal {
@@ -277,45 +463,70 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  backdrop-filter: blur(4px);
+  z-index: 20;
 }
 
 .modal-content {
   background: white;
-  padding: 2.5rem;
-  border-radius: 1rem;
+  padding: 24px;
+  border-radius: 8px;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .modal-content h3 {
-  color: #1e293b;
-  margin: 0 0 1.5rem 0;
-  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: 16px;
 }
 
 .modal-content textarea {
   width: 100%;
-  padding: 0.75rem;
+  height: 100px;
+  padding: 8px;
   border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  margin-bottom: 1.5rem;
-  font-size: 1rem;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 14px;
 }
 
-.modal-content button {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: 0.95rem;
-  transition: all 0.2s;
-  margin: 0 0.5rem;
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-.modal-content button:first-of-type {
-  background-color: #3b82f6;
-  color: white;
+
+/* Media queries for responsive design */
+@media (max-width: 768px) {
+  .ticket-details {
+    width: 90%;
+    padding: 20px;
+  }
+
+  .ticket-details h3 {
+    font-size: 20px;
+  }
+
+  .ticket-details h4 {
+    font-size: 16px;
+  }
+
+  .ticket-details p {
+    font-size: 14px;
+  }
+
+  .ticket-status {
+    font-size: 14px;
+  }
+
+  .comments-list li {
+    font-size: 12px;
+  }
+
+  .action-btn {
+    font-size: 14px;
+  }
 }
+
 </style>

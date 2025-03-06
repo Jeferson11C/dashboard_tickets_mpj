@@ -94,15 +94,13 @@ export default {
       const doc = new jsPDF({ orientation: 'landscape' });
       doc.text(`Reporte de tickets - ${this.area.nombre}`, 10, 10);
       doc.autoTable({
-        head: [['Número de Ticket', 'Fecha','Fecha de atencion', 'Documento', 'Nombres', 'Apellido Paterno', 'Apellido Materno', 'Estado']],
+        head: [['Número de Ticket', 'Fecha', 'Fecha de atencion', 'Documento', 'Nombre', 'Estado']],
         body: this.tickets.filter(ticket => ticket.areaNombre === this.area.nombre).map(ticket => [
           ticket.numeroTicket,
           ticket.fecha,
           ticket.updatedAt,
           ticket.documento,
-          ticket.nombres,
-          ticket.apePaterno,
-          ticket.apeMaterno,
+          `${ticket.nombres} ${ticket.apePaterno} ${ticket.apeMaterno}`,
           ticket.estado
         ])
       });

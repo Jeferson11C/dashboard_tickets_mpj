@@ -1,28 +1,56 @@
 <template>
-  <div class="grafico-container" >
-    <h1 class="main-title">Grafica de Tickets Atendidos </h1 >
+  <div class="grafico-container">
+    <h1 class="main-title">Gráfica de Tickets Atendidos</h1>
 
-    <div class="filters" v-if="userRole === 'Administrador'">
-      <div class="filter">
-        <label for="month">Mes:</label>
-        <select id="month" v-model="selectedMonth">
-          <option value="">Todos</option>
-          <option v-for="(month, index) in months" :key="index" :value="index + 1">{{ month }}</option>
-        </select>
+    <div class="panel-container" v-if="userRole === 'Administrador'">
+      <!-- Panel de filtros integrado en el gráfico -->
+      <div class="filter-panel">
+        <h4 class="filter-title">Distribución de Tickets Resueltos y Cancelados por Área</h4>
+        <div class="filters-grid">
+          <div class="filter-item">
+            <label for="day">Día:</label>
+            <select id="day" v-model="selectedDay" class="filter-select" :disabled="!selectedMonth">
+              <option value="">Todos</option>
+              <option v-for="day in availableDays" :key="`day-${day}`" :value="day">{{ day }}</option>
+            </select>
+            <small v-if="!selectedMonth" class="hint-text">Selecciona un mes primero</small>
+          </div>
+          <div class="filter-item">
+            <label for="month">Mes:</label>
+            <select id="month" v-model="selectedMonth" class="filter-select">
+              <option value="">Todos</option>
+              <option v-for="(month, index) in months" :key="`month-${index}`" :value="index + 1">{{ month }}</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label for="year">Año:</label>
+            <select id="year" v-model="selectedYear" class="filter-select">
+              <option v-for="year in years" :key="`year-${year}`" :value="year">{{ year }}</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <button @click="resetFilters" class="reset-button">
+              Restablecer Filtros
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="filter">
-        <label for="year">Año:</label>
-        <select id="year" v-model="selectedYear">
-          <option value="">Todos</option>
-          <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
-        </select>
+
+      <!-- Gráfico mejorado -->
+      <div class="chart-wrapper">
+        <div class="chart-container">
+          <BarChart ref="chart" v-if="hasData" :chartData="chartData" :chartOptions="chartOptions" />
+          <div v-else class="no-data-container">
+            <div class="no-data-message">
+              <i class="no-data-icon">📊</i>
+              <p>No hay datos disponibles para el período seleccionado.</p>
+              <button @click="resetFilters" class="reset-button">Mostrar todos los datos</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <!-- Gráfico -->
-    <div class="chart-container" v-if="userRole === 'Administrador'">
-      <BarChart v-if="hasData" :chartData="chartData" :chartOptions="chartOptions" />
-      <p v-else class="no-data-message">No hay datos disponibles para el mes y año seleccionados.</p>
-    </div>
+
     <!-- Dashboard Component -->
     <Dashboard />
   </div>
@@ -51,26 +79,76 @@ export default {
           {
             label: 'Tickets Resueltos',
             backgroundColor: '#2ecc71',
-            data: []
+            data: [],
+            borderRadius: 6
           },
           {
             label: 'Tickets Cancelados',
             backgroundColor: '#e74c3c',
-            data: []
+            data: [],
+            borderRadius: 6
           }
         ]
       },
       chartOptions: {
         responsive: true,
         maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              font: {
+                size: 12,
+                family: "'Poppins', sans-serif"
+              },
+              padding: 20
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleFont: {
+              size: 14,
+              family: "'Poppins', sans-serif"
+            },
+            bodyFont: {
+              size: 12,
+              family: "'Poppins', sans-serif"
+            },
+            padding: 12,
+            cornerRadius: 6
+          }
+        },
         scales: {
           y: {
-            beginAtZero: true
+            beginAtZero: true,
+            ticks: {
+              font: {
+                family: "'Poppins', sans-serif"
+              }
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            }
+          },
+          x: {
+            ticks: {
+              font: {
+                family: "'Poppins', sans-serif"
+              }
+            },
+            grid: {
+              display: false
+            }
           }
+        },
+        animation: {
+          duration: 800,
+          easing: 'easeOutQuart'
         }
       },
+      selectedDay: '',
       selectedMonth: '',
-      selectedYear: '',
+      selectedYear: new Date().getFullYear(),
       months: [
         'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
@@ -98,20 +176,41 @@ export default {
     this.updateChartData();
   },
   watch: {
+    selectedDay() {
+      this.updateChartData();
+    },
     selectedMonth() {
+      // Reset day when month changes
+      this.selectedDay = '';
       this.updateChartData();
     },
     selectedYear() {
+      // Reset day when year changes
+      this.selectedDay = '';
       this.updateChartData();
     }
   },
   computed: {
+    availableDays() {
+      if (!this.selectedMonth) return [];
+
+      const month = parseInt(this.selectedMonth);
+      const year = this.selectedYear ? parseInt(this.selectedYear) : new Date().getFullYear();
+
+      // Determinar el número de días en el mes seleccionado
+      // El día 0 del siguiente mes es el último día del mes actual
+      const daysInMonth = new Date(year, month, 0).getDate();
+
+      // Crear un array con los días disponibles
+      return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    },
     filteredTickets() {
       return this.tickets.filter(ticket => {
-        const ticketDate = dayjs(ticket.fecha);
+        const ticketDate = dayjs(ticket.updatedAt);
+        const matchesDay = !this.selectedDay || ticketDate.date() === parseInt(this.selectedDay);
         const matchesMonth = !this.selectedMonth || ticketDate.month() + 1 === parseInt(this.selectedMonth);
         const matchesYear = !this.selectedYear || ticketDate.year() === parseInt(this.selectedYear);
-        return matchesMonth && matchesYear;
+        return matchesDay && matchesMonth && matchesYear;
       });
     }
   },
@@ -127,7 +226,7 @@ export default {
     async fetchAreas() {
       try {
         const response = await TicketApiService.getAreas();
-        this.areas = response.data;
+        this.areas = response.data.filter(area => area.nombre !== 'General');
       } catch (error) {
         console.error('Error fetching areas:', error);
       }
@@ -160,6 +259,11 @@ export default {
         this.chartData.datasets[0].data = [];
         this.chartData.datasets[1].data = [];
       }
+    },
+    resetFilters() {
+      this.selectedDay = '';
+      this.selectedMonth = '';
+      this.selectedYear = '';
     }
   },
   beforeDestroy() {
@@ -171,57 +275,171 @@ export default {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 .grafico-container {
   padding: 2rem;
-  background-color: #f8f9fa;
-  border-radius: 1rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #f5f7fa;
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  font-family: 'Poppins', sans-serif;
 }
 
 .main-title {
-  font-size: 2rem;
-  color: #2c3e50;
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
-.filters {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
+  font-size: 2.2rem;
+  color: #1a237e;
   margin-bottom: 2rem;
+  text-align: center;
+  font-weight: 400;
+  letter-spacing: -0.5px;
 }
 
-.filter {
+.panel-container {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.filter-panel {
+  background-color: #f8f9ff;
+  border-radius: 0.8rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e0e6f3;
+
+}
+
+.filter-title {
+  color: #333;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
   display: flex;
   align-items: center;
+}
+
+.filter-title::before {
+  content: '📊';
+  margin-right: 0.5rem;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
-.filter label {
-  font-size: 1rem;
-  color: #34495e;
+.filter-item label {
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 500;
 }
 
-.filter select {
-  padding: 0.5rem;
-  border: 1px solid #ccc;
+.filter-select {
+  padding: 0.65rem;
+  border: 1px solid #e0e6f3;
   border-radius: 0.5rem;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  background-color: white;
+  transition: all 0.2s ease;
+  font-family: 'Poppins', sans-serif;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #4a6cf7;
+  box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.15);
+}
+
+.filter-select:disabled {
+  background-color: #f0f2f5;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.hint-text {
+  font-size: 0.8rem;
+  color: #6c7ae0;
+  margin-top: 0.25rem;
+}
+
+.reset-button {
+  background-color: #6c7ae0;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  margin-top: auto;
+}
+
+.reset-button:hover {
+  background-color: #5a68c0;
+  box-shadow: 0 4px 10px rgba(108, 122, 224, 0.2);
+}
+
+.chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .chart-container {
-  height: 400px;
+  height: 300px;
   background-color: #ffffff;
   padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 0.8rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f0f3fa;
+}
+
+.no-data-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 }
 
 .no-data-message {
   text-align: center;
   color: #666;
-  font-size: 1.2rem;
-  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.no-data-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+  .grafico-container {
+    padding: 1.5rem;
+  }
+
+  .main-title {
+    font-size: 1.8rem;
+  }
+
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-container {
+    height: 300px;
+  }
 }
 </style>

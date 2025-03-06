@@ -9,15 +9,16 @@ export default function useUserCreate() {
         nombre: '',
         apePaterno: '',
         apeMaterno: '',
-        username: '',
+        ventanilla: '',
         password: '',
         area: null,
         rol: null
     });
 
     const dniError = ref(false);
-    const areas = ref([{ nombre: 'Seleccione una opción', id: null }]);
-    const roles = ref(['Seleccione una opción', 'Administrador', 'Recepcionista']);
+    const areas = ref([]);
+    const roles = ref(['Administrador', 'Recepcionista']);
+    const showPassword = ref(false);
 
     const fetchAreas = async () => {
         try {
@@ -45,7 +46,7 @@ export default function useUserCreate() {
             nombre: user.value.nombre,
             apePaterno: user.value.apePaterno,
             apeMaterno: user.value.apeMaterno,
-            username: user.value.username,
+            ventanilla: user.value.ventanilla,
             password: user.value.password,
             area: user.value.area,
             rol: user.value.rol
@@ -61,7 +62,7 @@ export default function useUserCreate() {
             user.value.nombre = newUser.nombre;
             user.value.apePaterno = newUser.apePaterno;
             user.value.apeMaterno = newUser.apeMaterno;
-            user.value.username = newUser.username;
+            user.value.ventanilla = newUser.ventanilla;
             user.value.password = newUser.password;
             user.value.area = newUser.area;
             user.value.rol = newUser.rol;
@@ -74,7 +75,7 @@ export default function useUserCreate() {
         }
 
         user.value.dni = '';
-        user.value.username = '';
+        user.value.ventanilla = '';
         user.value.password = '';
         user.value.area = null;
         user.value.rol = null;
@@ -94,10 +95,10 @@ export default function useUserCreate() {
 
     const validateDNI = (event) => {
         const value = event.target.value;
-        if (/^\d{0,8}$/.test(value)) {
+        if (/^\d{0,9}$/.test(value)) {
             user.value.dni = value;
             dniError.value = false;
-            if (value.length === 8) {
+            if (value.length === 8 || value.length === 9) {
                 fetchUserData(value);
             }
         } else {
@@ -105,11 +106,15 @@ export default function useUserCreate() {
         }
     };
 
-    const validateUsername = (event) => {
-        const regex = /^[A-Za-z0-9]*$/;
+    const validateVentanilla = (event) => {
+        const regex = /^\d*$/;
         if (!regex.test(event.target.value)) {
-            user.value.username = event.target.value.replace(/[^A-Za-z0-9]/g, '');
+            user.value.ventanilla = event.target.value.replace(/\D/g, '');
         }
+    };
+
+    const toggleShowPassword = () => {
+        showPassword.value = !showPassword.value;
     };
 
     return {
@@ -122,6 +127,8 @@ export default function useUserCreate() {
         createUser,
         fetchUserData,
         validateDNI,
-        validateUsername
+        validateVentanilla,
+        showPassword,
+        toggleShowPassword
     };
 }
