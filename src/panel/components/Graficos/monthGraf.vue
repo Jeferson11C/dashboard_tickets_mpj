@@ -1,23 +1,33 @@
 <template>
-  <div class="content">
+  <div class="content" v-if="userRole === 'Recepcionista'">
     <div class="row">
       <div class="col-12">
         <div class="chart-card">
           <card type="chart">
             <div class="card-header">
-              <h5 class="card-category">Tendencia Mensual de Tickets Resueltos y Cancelados</h5>
+              <h5 class="card-category">Tendencia Diaria de Tickets Resueltos y Cancelados</h5>
               <div class="filters">
-                <div class="filter" v-if="userRole !== 'Recepcionista'">
+                <div class="filter" v-if="userRole === 'Administrador'">
                   <label for="area">Área:</label>
                   <select id="area" v-model="selectedArea" class="select-filter">
                     <option value="">Todas</option>
                     <option v-for="area in areas" :key="area.id" :value="area.nombre">{{ area.nombre }}</option>
                   </select>
                 </div>
+                <div class="filter" v-else>
+                  <label>Área:</label>
+                  <span>{{ userArea }}</span>
+                </div>
+                <div class="filter">
+                  <label for="month">Mes:</label>
+                  <select id="month" v-model="selectedMonth" class="select-filter">
+                    <option value="">Todos</option>
+                    <option v-for="(month, index) in months" :key="index" :value="index + 1">{{ month }}</option>
+                  </select>
+                </div>
                 <div class="filter">
                   <label for="year">Año:</label>
                   <select id="year" v-model="selectedYear" class="select-filter">
-                    <option value="">Todos</option>
                     <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
                   </select>
                 </div>
@@ -39,12 +49,12 @@
 </template>
 
 <script>
-import Card from "../components/Charts/Card.vue";
-import LineChart from "../components/LineChart.vue";
-import * as chartConfigs from "../components/Charts/config";
-import config from "../../config";
-import TicketApiService from '../../public/services/ticket-api.service';
-import WebSocketService from '../../shared/websocket.service';
+import Card from "../charts/Card.vue";
+import LineChart from "../charts/LineChart.vue";
+import * as chartConfigs from "../charts/config.js";
+import config from "../../../config.js";
+import TicketApiService from '../../../public/services/ticket-api.service.js';
+import WebSocketService from '../../../shared/websocket.service.js';
 
 export default {
   components: {
@@ -52,6 +62,7 @@ export default {
     LineChart,
   },
   data() {
+    const currentDate = new Date();
     return {
       bigLineChart: {
         allData: [],
@@ -82,7 +93,9 @@ export default {
       },
       areas: [],
       selectedArea: '',
-      selectedYear: '',
+      selectedMonth: currentDate.getMonth() + 1,
+      selectedYear: currentDate.getFullYear(),
+      months: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
       years: [],
       tickets: [],
       socket: null,
@@ -116,30 +129,24 @@ export default {
         yearsSet.add(year);
       });
       this.years = Array.from(yearsSet).sort((a, b) => b - a);
-      // Set current year as default if available
-      const currentYear = new Date().getFullYear();
-      if (this.years.includes(currentYear)) {
-        this.selectedYear = currentYear;
-      } else if (this.years.length > 0) {
-        this.selectedYear = this.years[0];
-      }
     },
     updateChartData() {
-      const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-      const resolvedData = Array(12).fill(0);
-      const canceledData = Array(12).fill(0);
+      const daysInMonth = new Date(this.selectedYear, this.selectedMonth, 0).getDate();
+      const resolvedData = Array(daysInMonth).fill(0);
+      const canceledData = Array(daysInMonth).fill(0);
 
       this.tickets.forEach(ticket => {
         const updatedAt = new Date(ticket.updatedAt);
         if (isNaN(updatedAt.getTime())) return; // Skip invalid dates
         if (this.userRole === 'Recepcionista' && ticket.areaNombre !== this.userArea) return;
         if (this.selectedArea && ticket.areaNombre !== this.selectedArea) return;
+        if (this.selectedMonth && updatedAt.getMonth() + 1 !== parseInt(this.selectedMonth)) return;
         if (this.selectedYear && updatedAt.getFullYear() !== parseInt(this.selectedYear)) return;
-        const month = updatedAt.getMonth();
+        const day = updatedAt.getDate() - 1;
         if (ticket.estado === 'Resuelto') {
-          resolvedData[month]++;
+          resolvedData[day]++;
         } else if (ticket.estado === 'Cancelado') {
-          canceledData[month]++;
+          canceledData[day]++;
         }
       });
 
@@ -147,6 +154,9 @@ export default {
       this.initBigChart(0);
     },
     initBigChart(index) {
+      const daysInMonth = new Date(this.selectedYear, this.selectedMonth, 0).getDate();
+      const labels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
       const chartData = {
         datasets: [
           {
@@ -180,7 +190,7 @@ export default {
             data: this.bigLineChart.allData[1],
           }
         ],
-        labels: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
+        labels: labels,
       };
       if (this.$refs.bigChart) {
         this.$refs.bigChart.updateGradients(chartData);
@@ -217,12 +227,13 @@ export default {
     updateSingleTicket(ticket) {
       if (this.userRole === 'Recepcionista' && ticket.areaNombre !== this.userArea) return;
       if (this.selectedArea && ticket.areaNombre !== this.selectedArea) return;
+      if (this.selectedMonth && new Date(ticket.updatedAt).getMonth() + 1 !== parseInt(this.selectedMonth)) return;
       if (this.selectedYear && new Date(ticket.updatedAt).getFullYear() !== parseInt(this.selectedYear)) return;
-      const month = new Date(ticket.updatedAt).getMonth();
+      const day = new Date(ticket.updatedAt).getDate() - 1;
       if (ticket.estado === 'Resuelto') {
-        this.bigLineChart.allData[0][month]++;
+        this.bigLineChart.allData[0][day]++;
       } else if (ticket.estado === 'Cancelado') {
-        this.bigLineChart.allData[1][month]++;
+        this.bigLineChart.allData[1][day]++;
       }
       this.initBigChart(this.bigLineChart.activeIndex);
     },
@@ -234,6 +245,9 @@ export default {
   },
   watch: {
     selectedArea() {
+      this.updateChartData();
+    },
+    selectedMonth() {
       this.updateChartData();
     },
     selectedYear() {
@@ -251,6 +265,7 @@ export default {
 <style scoped>
 .content {
   padding: 20px;
+  background-color: lightgray;
 }
 
 .row {
@@ -268,6 +283,7 @@ export default {
   align-items: center;
   margin-bottom: 15px;
   flex-wrap: wrap;
+
 }
 
 .card-category {
@@ -275,6 +291,7 @@ export default {
   color: #555;
   margin: 0;
   font-weight: 600;
+
 }
 
 .filters {
@@ -320,6 +337,7 @@ export default {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   padding: 20px;
   transition: all 0.3s ease;
+
 }
 
 .chart-card:hover {

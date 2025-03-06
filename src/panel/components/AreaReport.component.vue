@@ -90,6 +90,11 @@ export default {
     countTicketsByStatus(area, status) {
       return this.tickets.filter(ticket => ticket.estado === status && ticket.areaNombre === area).length;
     },
+    formatDate(dateString) {
+      if (!dateString) return '---';
+      const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+      return new Date(dateString).toLocaleString('es-ES', options);
+    },
     downloadPDF() {
       const doc = new jsPDF({ orientation: 'landscape' });
       doc.text(`Reporte de tickets - ${this.area.nombre}`, 10, 10);
@@ -97,8 +102,8 @@ export default {
         head: [['Número de Ticket', 'Fecha', 'Fecha de atencion', 'Documento', 'Nombre', 'Estado']],
         body: this.tickets.filter(ticket => ticket.areaNombre === this.area.nombre).map(ticket => [
           ticket.numeroTicket,
-          ticket.fecha,
-          ticket.updatedAt,
+          this.formatDate(ticket.fecha),
+          ticket.updatedAt ? this.formatDate(ticket.updatedAt) : '---',
           ticket.documento,
           `${ticket.nombres} ${ticket.apePaterno} ${ticket.apeMaterno}`,
           ticket.estado

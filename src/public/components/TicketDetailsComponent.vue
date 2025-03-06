@@ -190,6 +190,9 @@ export default {
         <p><strong>Documento:</strong> {{ selectedTicket.documento }}</p>
         <p><strong>Nombre:</strong> {{ selectedTicket.nombres }} {{ selectedTicket.apePaterno }} {{ selectedTicket.apeMaterno }}</p>
         <p><strong>Fecha:</strong> {{ formatDate(selectedTicket.fecha) }}</p>
+        <p v-if="selectedTicket.estado === 'Resuelto' || selectedTicket.estado === 'Cancelado'">
+          <strong>Atendido:</strong> {{ formatDate(selectedTicket.updatedAt) }}
+        </p>
         <p><strong>Estado:</strong> <span class="ticket-status" :class="'status-' + selectedTicket.estado.toLowerCase()">{{ selectedTicket.estado }}</span></p>
 
         <div v-if="selectedTicket.estado === 'Resuelto' || selectedTicket.estado === 'Cancelado'">
@@ -301,7 +304,6 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   margin: 0 auto; /* Centrar horizontalmente */
   justify-content: center; /* Centrar contenido */
-  border: 2px solid #1457ff;
 }
 
 .ticket-content {

@@ -1,5 +1,3 @@
-
-
 <script>
 import TicketListComponent from '../components/TicketListComponent.vue';
 import TicketDetailsComponent from '../components/TicketDetailsComponent.vue';
@@ -23,6 +21,7 @@ export default {
       tickets: [],
       areas: [],
       selectedTicket: null,
+      lastSelectedTicket: null, // Store last selected "En espera" ticket
       selectedArea: localStorage.getItem('userRole') === 'Administrador' ? '' : localStorage.getItem('userArea'),
       userRole: localStorage.getItem('userRole') || '',
       selectedStatus: 'En espera',
@@ -116,6 +115,7 @@ export default {
         this.ticketToTransfer = null;
       }
     },
+
     async updateTicketStatus(ticket, status, observation = '') {
       try {
         ticket.estado = status;
@@ -151,7 +151,15 @@ export default {
       }
     },
     filterTicketsByStatus(status) {
+      if (this.selectedStatus === 'En espera' && this.selectedTicket) {
+        this.lastSelectedTicket = this.selectedTicket; // Save the current selected "En espera" ticket
+      }
       this.selectedStatus = status;
+      if (status === 'En espera') {
+        this.selectedTicket = this.lastSelectedTicket; // Restore the selected "En espera" ticket
+      } else {
+        this.selectedTicket = null; // Close the details view for other statuses
+      }
     },
     handleAreaChange() {
       this.selectedTicket = null;
@@ -397,13 +405,7 @@ export default {
   height: 100%;
 }
 
-.no-ticket-selected {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  color: #171617;
-}
+
 
 .modal {
   position: fixed;
@@ -523,7 +525,7 @@ export default {
 }
 
 .selected-status {
-  transform: scale(1.05);
+  transform: scale(1);
   background-color: #d1e7ff;
   border-color: #0d6efd;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

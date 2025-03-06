@@ -53,19 +53,23 @@
 
     <!-- Dashboard Component -->
     <Dashboard />
+    <month-graf />
+
   </div>
 </template>
 
 <script>
-import BarChart from '../components/BarChart.vue';
-import Dashboard from '../components/Dashboard.vue';
+import BarChart from '../components/charts/BarChart.vue';
+import Dashboard from '../components/Graficos/Dashboard.vue';
 import TicketApiService from '../../public/services/ticket-api.service';
 import WebSocketService from '../../shared/websocket.service';
 import dayjs from 'dayjs';
+import MonthGraf from "../components/Graficos/monthGraf.vue";
 
 export default {
   name: "Grafico",
   components: {
+    MonthGraf,
     BarChart,
     Dashboard
   },
@@ -146,9 +150,9 @@ export default {
           easing: 'easeOutQuart'
         }
       },
-      selectedDay: '',
-      selectedMonth: '',
-      selectedYear: new Date().getFullYear(),
+      selectedDay: dayjs().date(),
+      selectedMonth: dayjs().month() + 1,
+      selectedYear: dayjs().year(),
       months: [
         'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
@@ -180,13 +184,9 @@ export default {
       this.updateChartData();
     },
     selectedMonth() {
-      // Reset day when month changes
-      this.selectedDay = '';
       this.updateChartData();
     },
     selectedYear() {
-      // Reset day when year changes
-      this.selectedDay = '';
       this.updateChartData();
     }
   },
@@ -245,25 +245,60 @@ export default {
       this.hasData = filteredTickets.length > 0;
 
       if (this.hasData) {
-        this.chartData.labels = this.areas.map(area => area.nombre);
-
-        this.chartData.datasets[0].data = this.areas.map(area =>
+        console.log('Tickets obtenidos:', filteredTickets.length);
+        const labels = this.areas.map(area => area.nombre);
+        const resolvedData = this.areas.map(area =>
             filteredTickets.filter(ticket => ticket.areaNombre === area.nombre && ticket.estado === 'Resuelto').length
         );
-
-        this.chartData.datasets[1].data = this.areas.map(area =>
+        const canceledData = this.areas.map(area =>
             filteredTickets.filter(ticket => ticket.areaNombre === area.nombre && ticket.estado === 'Cancelado').length
         );
+
+        // Update chartData to trigger reactivity
+        this.chartData = {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Tickets Resueltos',
+              backgroundColor: '#2ecc71',
+              data: resolvedData,
+              borderRadius: 6
+            },
+            {
+              label: 'Tickets Cancelados',
+              backgroundColor: '#e74c3c',
+              data: canceledData,
+              borderRadius: 6
+            }
+          ]
+        };
       } else {
-        this.chartData.labels = [];
-        this.chartData.datasets[0].data = [];
-        this.chartData.datasets[1].data = [];
+        console.log('No se obtuvieron tickets para el filtro aplicado.');
+        this.chartData = {
+          labels: [],
+          datasets: [
+            {
+              label: 'Tickets Resueltos',
+              backgroundColor: '#2ecc71',
+              data: [],
+              borderRadius: 6
+            },
+            {
+              label: 'Tickets Cancelados',
+              backgroundColor: '#e74c3c',
+              data: [],
+              borderRadius: 6
+            }
+          ]
+        };
       }
     },
     resetFilters() {
-      this.selectedDay = '';
-      this.selectedMonth = '';
-      this.selectedYear = '';
+      const currentDate = dayjs();
+      this.selectedDay = currentDate.date();
+      this.selectedMonth = currentDate.month() + 1;
+      this.selectedYear = currentDate.year();
+      this.updateChartData();
     }
   },
   beforeDestroy() {
