@@ -35,6 +35,7 @@ export default {
   beforeDestroy() {
     this.webSocketService.disconnect();
   },
+
   methods: {
     async logout() {
       try {

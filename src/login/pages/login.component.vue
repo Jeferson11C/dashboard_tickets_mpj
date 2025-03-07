@@ -57,6 +57,7 @@
   </div>
 </template>
 
+
 <script>
 import LoginApiService from '../services/login-api.service';
 import UserApiService from '../../administrador/services/user-api.service';
@@ -73,11 +74,14 @@ export default {
   },
   methods: {
     validateNumericInput() {
-      // Replace any non-numeric characters
       this.dni = this.dni.replace(/[^0-9]/g, '');
     },
     togglePasswordVisibility() {
       this.showPassword = !this.showPassword;
+    },
+    setCookie(name, value, days) {
+      const expires = new Date(Date.now() + days * 864e5).toUTCString();
+      document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
     },
     async login() {
       try {
@@ -89,7 +93,7 @@ export default {
         const response = await LoginApiService.signIn(this.dni, this.password);
         const user = response.data;
 
-        if (user && user.token && user.id) {
+        if (user && user.token && user.id && user.refreshToken) {
           const userInfoResponse = await UserApiService.fetchUserById(user.id);
           const userInfo = userInfoResponse.data;
 
@@ -100,7 +104,6 @@ export default {
             }
 
             localStorage.setItem('token', user.token);
-            localStorage.setItem('accessToken', user.token);
             localStorage.setItem('userId', user.id);
             localStorage.setItem('userRole', userInfo.rol);
             localStorage.setItem('userArea', userInfo.area);
@@ -109,6 +112,9 @@ export default {
             } else {
               console.error('User full name is missing');
             }
+
+            // Guardar el refreshToken en una cookie
+            this.setCookie('refreshToken', user.refreshToken, 7); // Guardar por 7 días
 
             console.log('User logged in successfully');
 
