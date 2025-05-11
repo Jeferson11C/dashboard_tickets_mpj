@@ -1,6 +1,6 @@
 class WebSocketService {
     constructor() {
-        this.url = "ws://localhost:5281";
+        this.url = "ws://localhost:3000";
         this.socket = new WebSocket(this.url);
     }
 

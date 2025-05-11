@@ -25,11 +25,13 @@
           Cargando historial...
         </div>
         <div v-else>
-          <div v-if="!filteredTicketsByArea[selectedArea]?.length" class="p-4 bg-yellow-100 text-yellow-700 rounded-lg">
-            Aún no hay historial
+          <div v-if="!Object.keys(filteredTicketsByArea).length" class="empty-state p-8 bg-gray-50 rounded-lg border border-gray-200 text-center">
+            <div class="empty-icon mb-4">📋</div>
+            <h3 class="text-lg font-medium text-gray-700 mb-2">No hay tickets disponibles</h3>
+            <p class="text-gray-500">No se encontraron tickets para mostrar en el historial.</p>
           </div>
           <div
-              v-for="(tickets, area) in filteredTicketsByArea"
+              v-for="(tickets, area) in paginatedTicketsByArea"
               :key="area"
               class="ticket-area mb-6 h-full">
             <div class="area-header mb-4 bg-gray-50 p-4 rounded-t-lg border-b">
@@ -134,6 +136,11 @@
                 </pv-column>
               </pv-data-table>
             </div>
+            <div class="pagination-controls">
+              <button @click="prevPage(area)" :disabled="currentPage[area] === 1">Anterior</button>
+              <span>Página {{ currentPage[area] }} de {{ totalPages(area) }}</span>
+              <button @click="nextPage(area)" :disabled="currentPage[area] === totalPages(area)">Siguiente</button>
+            </div>
           </div>
         </div>
       </div>
@@ -166,7 +173,9 @@ export default {
         'updatedAt': { value: null, matchMode: 'contains' },
         'estado': { value: null, matchMode: 'equals' },
         'atendidoPor': { value: null, matchMode: 'contains' }
-      }
+      },
+      currentPage: {},
+      itemsPerPage: 10
     };
   },
   computed: {
@@ -180,11 +189,33 @@ export default {
         result[this.selectedArea] = this.ticketsByArea[this.selectedArea];
       }
       return result;
+    },
+    paginatedTicketsByArea() {
+      const result = {};
+      for (const area in this.filteredTicketsByArea) {
+        const start = (this.currentPage[area] - 1) * this.itemsPerPage;
+        const end = start + this.itemsPerPage;
+        result[area] = this.filteredTicketsByArea[area].slice(start, end);
+      }
+      return result;
     }
   },
   methods: {
     selectArea(area) {
       this.selectedArea = area;
+    },
+    totalPages(area) {
+      return Math.ceil(this.filteredTicketsByArea[area].length / this.itemsPerPage);
+    },
+    prevPage(area) {
+      if (this.currentPage[area] > 1) {
+        this.currentPage[area]--;
+      }
+    },
+    nextPage(area) {
+      if (this.currentPage[area] < this.totalPages(area)) {
+        this.currentPage[area]++;
+      }
     },
     formatDateTime(dateString) {
       if (!dateString) return '---';
@@ -295,6 +326,7 @@ export default {
             'estado': {value: null, matchMode: 'equals'},
             'atendidoPor': {value: null, matchMode: 'contains'}
           };
+          this.currentPage[ticket.areaNombre] = 1;
         }
         acc[ticket.areaNombre].push(ticket);
         acc[ticket.areaNombre].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
@@ -317,6 +349,33 @@ export default {
 </script>
 
 <style scoped>
+
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.pagination-controls button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.pagination-controls button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.pagination-controls span {
+  font-size: 1rem;
+}
+
+
 .historial {
   width: 100%;
 }
@@ -369,6 +428,18 @@ export default {
   background: linear-gradient(to right, #f8fafc, #f1f5f9);
   padding: 1.25rem 1.5rem;
   border-bottom: 2px solid #e2e8f0;
+}
+
+.empty-state {
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon {
+  font-size: 10rem;
 }
 
 .area-header h2 {

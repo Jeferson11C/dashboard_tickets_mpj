@@ -7,7 +7,6 @@ class LoginApiService {
         localStorage.setItem('token', token); // Store the token
         return response;
     }
-
 }
 
 export default LoginApiService;

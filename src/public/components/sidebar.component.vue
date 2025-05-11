@@ -6,7 +6,7 @@
     <nav class="sidebar-nav">
       <button
           class="nav-button"
-          :class="{ active: isActive('/home') }"
+          :class="{ active: isActive('/Atencion-ticket') }"
           @click="goToTicketPanel"
       >
         <i class="icon">🎫</i>
@@ -94,7 +94,7 @@ export default {
       this.showReportesDropdown = !this.showReportesDropdown;
     },
     goToTicketPanel() {
-      this.$router.push({ path: "/home" });
+      this.$router.push({ path: "/Atencion-ticket" });
     },
     goToGeneralReport() {
       this.$router.push({ path: "/reporte" });
@@ -133,7 +133,7 @@ export default {
 <style scoped>
 .sidebar {
   width: 240px;
-  background: linear-gradient(135deg, #34495e 0%, #3498db 100%);
+  background: linear-gradient(to right, #12467a, #2980b9);
   color: #ecf0f1;
   height: auto;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);

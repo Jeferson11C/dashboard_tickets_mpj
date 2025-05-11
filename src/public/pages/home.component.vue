@@ -15,6 +15,7 @@ export default {
     return {
       statuses: [
         {title: "En espera", count: 0},
+        {title: "Abierto", count: 0},
         {title: "Resuelto", count: 0},
         {title: "Cancelado", count: 0}
       ],
@@ -151,12 +152,12 @@ export default {
       }
     },
     filterTicketsByStatus(status) {
-      if (this.selectedStatus === 'En espera' && this.selectedTicket) {
-        this.lastSelectedTicket = this.selectedTicket; // Save the current selected "En espera" ticket
+      if (this.selectedStatus === 'En espera' && this.selectedTicket && this.selectedTicket.estado === 'Abierto') {
+        this.lastSelectedTicket = this.selectedTicket; // Save the current selected "En espera" ticket if it's "Abierto"
       }
       this.selectedStatus = status;
-      if (status === 'En espera') {
-        this.selectedTicket = this.lastSelectedTicket; // Restore the selected "En espera" ticket
+      if (status === 'En espera' && this.lastSelectedTicket && this.lastSelectedTicket.estado === 'Abierto') {
+        this.selectedTicket = this.lastSelectedTicket; // Restore the selected "En espera" ticket if it's "Abierto"
       } else {
         this.selectedTicket = null; // Close the details view for other statuses
       }
@@ -272,7 +273,7 @@ export default {
             class="status"
             v-for="status in statuses"
             :key="status.title"
-            :class="{ 'selected-status': selectedStatus === status.title, 'status-pending': status.title === 'En espera', 'status-resolved': status.title === 'Resuelto', 'status-cancelled': status.title === 'Cancelado' }"
+            :class="{ 'selected-status': selectedStatus === status.title, 'status-pending': status.title === 'En espera', 'status-open': status.title === 'Abierto', 'status-resolved': status.title === 'Resuelto', 'status-cancelled': status.title === 'Cancelado' }"
             @click="filterTicketsByStatus(status.title)"
         >
           <h3>{{ status.title }}</h3>
@@ -323,6 +324,9 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden; /* Evita que el contenido se desborde */
+}
+.sidebar select option:hover {
+  background-color: red;
 }
 
 .content {
@@ -510,6 +514,12 @@ export default {
   background-color: #e6f3ff;
   border-color: #2196f3;
   color: #2196f3;
+}
+
+.status-open {
+  background-color: #fff3e0;
+  border-color: #ff9800;
+  color: #ff9800;
 }
 
 .status-resolved {

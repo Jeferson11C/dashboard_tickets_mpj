@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 
 const routes = [
     { path: "/", name: "login", component: () => import("../login/pages/login.component.vue"), meta: { title: "Login" } },
-    { path: "/home", name: "home", component: () => import("../public/pages/home.component.vue"), meta: { title: "Home", requiresAuth: true } },
+    { path: "/Atencion-ticket", name: "home", component: () => import("../public/pages/home.component.vue"), meta: { title: "Atencion de tickets", requiresAuth: true } },
     { path: "/reporte", name: "reporte", component: () => import("../panel/pages/reporte.component.vue"), meta: { title: "Reporte", requiresAuth: true } },
     { path: "/administrador", name: "administrador", component: () => import("../administrador/pages/admi.component.vue"), meta: { title: "Usuarios", requiresAuth: true } },
     { path: "/grafico", name: "grafico", component: () => import("../panel/pages/grafico.component.vue"), meta: { title: "Grafico", requiresAuth: true } },
@@ -16,7 +16,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
     console.clear();
-    let baseTitle = 'MPJ';
+    let baseTitle = 'STK';
     document.title = `${baseTitle} | ${to.meta["title"]}`;
 
     const userRole = localStorage.getItem('userRole');

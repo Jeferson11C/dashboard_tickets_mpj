@@ -52,6 +52,20 @@ export default {
       const gradients = [
       ];
       return gradients[Math.floor(Math.random() * gradients.length)];
+    },
+    getStatusClass(status) {
+      switch (status.toLowerCase()) {
+        case 'en espera':
+          return 'status-pending';
+        case 'abierto':
+          return 'status-open';
+        case 'resuelto':
+          return 'status-resolved';
+        case 'cancelado':
+          return 'status-cancelled';
+        default:
+          return '';
+      }
     }
   }
 };
@@ -95,10 +109,7 @@ export default {
                 <span class="prefix">{{ ticket.numeroTicket.split('-')[0] }}-</span>
                 <span class="number">{{ getTicketNumber(ticket.numeroTicket) }}</span>
               </div>
-              <span class="ticket-status" :style="{
-                backgroundColor: getStatusColor(ticket.estado).bg,
-                color: getStatusColor(ticket.estado).text
-              }">
+              <span class="ticket-status" :class="getStatusClass(ticket.estado)">
                 {{ ticket.estado }}
               </span>
             </div>
@@ -127,6 +138,26 @@ export default {
   width: 100%;
   max-width: 100%;
   font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+}
+
+.status-pending {
+  background-color: #e6f3ff;
+  color: #2196f3;
+}
+
+.status-resolved {
+  background-color: #e8f5e9;
+  color: #4caf50;
+}
+
+.status-cancelled {
+  background-color: #ffebee;
+  color: #f44336;
+}
+
+.status-open {
+  border-color: #ff9800;
+  color: #ff9800;
 }
 
 .empty-state {
